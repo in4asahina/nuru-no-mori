@@ -157,12 +157,41 @@ body.touring .dock,body.touring .legend{display:none}
 @media (max-width:760px){
   .legend{display:none}
   .brand p{display:none}
-  .dock{gap:6px}
-  .dock .btn{padding:8px 10px;font-size:13px;white-space:nowrap}
+  /* スマホ縦：下のボタンは画面幅いっぱいの2段にそろえる */
+  .dock{left:0;right:0;transform:none;width:auto;max-width:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;
+    bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .dock .btn{grid-column:span 2;padding:10px 4px;font-size:13px;white-space:nowrap;text-align:center}
+  .dock #tourBtn{grid-column:span 4}
+  .brand h1{font-size:24px}
+  .count b{font-size:24px}
+  .tour{width:calc(100% - 24px);bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   .panel{top:auto;left:0;right:0;width:auto;bottom:0;height:60%;border-left:0;border-right:0;
     padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
   body.panel-open .dock{display:none}
   .bigword{top:24%}
+}
+/* スマホ横：高さが足りないので、見出しを小さく、パネルとカードを左右に寄せる */
+@media (max-height:500px) and (orientation:landscape){
+  .top{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  .brand{gap:2px}
+  .brand h1{font-size:22px}
+  .brand .rule,.brand p,.legend,.hint{display:none}
+  .count b{font-size:22px}
+  .dock{bottom:calc(10px + env(safe-area-inset-bottom,0px));gap:6px}
+  .dock .btn{padding:7px 12px;font-size:13px}
+  .panel{top:calc(10px + env(safe-area-inset-top,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(420px,46%)}
+  .panel .body{gap:10px}
+  .panel h2{font-size:24px}
+  body.panel-open .dock{display:none}
+  .tour{left:max(12px,env(safe-area-inset-left,0px));transform:none;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(420px,46%);max-height:calc(100% - 20px);overflow-y:auto;padding:10px 14px 12px;gap:6px}
+  .tour h2{font-size:20px}
+  .tour p{font-size:13px;line-height:1.7}
+  .bigword{left:46%;top:20%;font-size:26vh}
+  .gate-in{gap:10px;padding:8px}
+  .gate h2{font-size:26px}
+  .gate p{font-size:12.5px}
+  .sheet{max-height:calc(100vh - 20px)}
+  .sheet .body{gap:10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -474,6 +503,7 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
 const camera=new THREE.PerspectiveCamera(innerWidth<760?66:52,innerWidth/innerHeight,1,5000);
 const narrow=()=>innerWidth<760;
+const short=()=>innerHeight<500&&innerWidth>innerHeight;
 const homePos=()=>narrow()?new THREE.Vector3(520,230,740):new THREE.Vector3(320,120,420);
 camera.position.copy(homePos());
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -529,11 +559,15 @@ function textSprite(text,{size=6,color="#ecebe6",font="Zen Kaku Gothic New",weig
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,toneMapped:false}));
   const h=size*(H/px);s.scale.set(h*W/H,h,1);s.renderOrder=5;return s;
 }
+// スマホでは遠くから全体を見るので、文字を少し大きくする
+const labelScale=()=>narrow()?1.5:short()?1.25:1;
+function fitLabel(s){if(!s.userData.base)s.userData.base=s.scale.clone();s.scale.copy(s.userData.base).multiplyScalar(labelScale())}
 function makeLabel(n){
   const isRoom=n.cat==="room",isCore=n.cat==="core";
-  return textSprite(n.name,{size:isCore?13:isRoom?9:5.6,font:(isRoom||isCore)?"Shippori Mincho B1":"Zen Kaku Gothic New",weight:(isRoom||isCore)?800:500,
-    sub:isRoom?`${n.en} · ${n.sub}`:isCore?"NULL²ⁿ NEXUS":null});
+  return fitLabel_(textSprite(n.name,{size:isCore?13:isRoom?9:5.6,font:(isRoom||isCore)?"Shippori Mincho B1":"Zen Kaku Gothic New",weight:(isRoom||isCore)?800:500,
+    sub:isRoom?`${n.en} · ${n.sub}`:isCore?"NULL²ⁿ NEXUS":null}));
 }
+function fitLabel_(s){fitLabel(s);return s}
 
 /* ───────── 配置（部屋は輪、他は力学で浮かぶ） ───────── */
 let seed=7;const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
@@ -662,8 +696,8 @@ function closePanel(){$("panel").hidden=true;document.body.classList.remove("pan
 const vo={x:0,y:0};
 function viewGoal(){
   const W=innerWidth,H=innerHeight;
-  if(tourOn)return narrow()?{x:0,y:H*.13}:{x:0,y:30};
-  if(!$("panel").hidden)return narrow()?{x:0,y:H*.24}:{x:Math.min(220,W*.18),y:0};
+  if(tourOn)return narrow()?{x:0,y:H*.13}:short()?{x:-W*.22,y:0}:{x:0,y:30};
+  if(!$("panel").hidden)return narrow()?{x:0,y:H*.24}:short()?{x:W*.24,y:0}:{x:Math.min(220,W*.18),y:0};
   return {x:0,y:0};
 }
 $("panelClose").onclick=()=>{closePanel();clearFocus()};
@@ -793,11 +827,19 @@ function pick(ev){
   const hs=ray.intersectObjects(hits.filter(h=>byId[h.userData.id].vis&&h.parent.visible),false);
   return hs.length?byId[hs[0].object.userData.id]:null;
 }
+// 指で触るときは、画面上でいちばん近い点を選ぶ（小さな点も押しやすく）
+function pickNear(ev,radius=34){
+  let best=null,bd=radius;const v=new THREE.Vector3();
+  N.forEach(n=>{if(!n.vis||!n.obj.visible)return;
+    [n.obj,n.label].forEach(o=>{o.getWorldPosition(v).project(camera);if(v.z>1)return;
+      const x=(v.x+1)/2*innerWidth,y=(1-v.y)/2*innerHeight;const d=Math.hypot(x-ev.clientX,y-ev.clientY);if(d<bd){bd=d;best=n}})});
+  return best;
+}
 let downAt=null;
 renderer.domElement.addEventListener("pointerdown",e=>{downAt=[e.clientX,e.clientY]});
 renderer.domElement.addEventListener("pointerup",e=>{
   if(!downAt)return;const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(moved>6)return;
-  const n=pick(e);if(n){if(tourOn)stopTour();select(n.id)}
+  const n=e.pointerType==="mouse"?pick(e):(pickNear(e)||pick(e));if(n){if(tourOn)stopTour();select(n.id)}
 });
 renderer.domElement.addEventListener("pointerleave",()=>{tip.hidden=true});
 renderer.domElement.addEventListener("pointermove",e=>{
@@ -868,7 +910,10 @@ function loop(now){
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
-addEventListener("resize",()=>{camera.fov=narrow()?66:52;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);mirrorFloor.getRenderTarget().setSize(rtW(),rtH())});
+addEventListener("resize",()=>{camera.fov=narrow()?66:52;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);mirrorFloor.getRenderTarget().setSize(rtW(),rtH());
+  N.forEach(n=>fitLabel(n.label));
+  // 向きを変えたら、何も選んでいなければ全体が入る位置へ戻る
+  if(started&&!focus&&!tourOn){clearTimeout(window.__rz);window.__rz=setTimeout(()=>flyTo(homePos(),new THREE.Vector3(0,0,0),700),250)}});
 addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("quiz").hidden)$("quiz").hidden=true;else if(tourOn)endTour();else{closePanel();clearFocus()}}});
 applyFocus();
 requestAnimationFrame(loop);
