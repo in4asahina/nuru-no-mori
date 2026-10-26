@@ -153,6 +153,19 @@ body.touring .dock,body.touring .legend{display:none}
 
 .tooltip{position:fixed;z-index:9;pointer-events:none;background:var(--panel-solid);border:1px solid var(--hair);padding:4px 10px;font-size:13px;transform:translate(12px,12px)}
 
+.loading{position:fixed;z-index:2;left:0;right:0;top:50%;text-align:center;pointer-events:none}
+.fallback{position:fixed;inset:0;z-index:30;background:var(--void);overflow-y:auto;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(32px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.fb-in{max-width:720px;margin:0 auto;display:grid;gap:10px}
+.fallback h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,6vw,40px);margin:0;border-bottom:1.5px solid var(--shu);padding-bottom:8px}
+.fallback h2{display:flex;align-items:center;gap:8px;font-size:14px;letter-spacing:.06em;margin:18px 0 0}
+.fb-note{color:var(--dim);font-size:14px;margin:0}
+.fallback details{border-bottom:1px solid var(--hair);padding:8px 0}
+.fallback summary{cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:18px}
+.fallback summary small{font-family:var(--f-body);font-weight:400;font-size:12px;color:var(--dim);margin-left:10px}
+.fallback details p{margin:6px 0 0;font-size:14px}
+.fb-tip{border-left:1.5px solid var(--shu);padding-left:10px;color:var(--dim)}
+.fb-feel{font-family:var(--f-display);font-weight:800;color:var(--shu);font-size:22px}
 @media (max-width:1100px){.hint{display:none}}
 @media (max-width:760px){
   .legend{display:none}
@@ -261,13 +274,10 @@ body.touring .dock,body.touring .legend{display:none}
 <canvas id="dust" aria-hidden="true"></canvas>
 <div class="tooltip" id="tooltip" hidden></div>
 
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { Reflector } from 'three/addons/objects/Reflector.js';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-
+<div class="loading label" id="loading">LOADING <span class="s">/</span> 森を読み込んでいます</div>
+<script>
+/* ことばのデータと門のボタンは、3D表示とは別に先に動かす（3Dの読み込みが遅い・失敗しても反応する） */
+(function(){
 /* ───────── ことばのデータ ───────── */
 const SRC={
   nexus:["null²ⁿ 公式","https://null2.nexus/"],
@@ -284,7 +294,17 @@ const SRC={
   happy:["ハピエル 開幕レポート","https://happyell.co.jp/null2n-yokohama-landmark"],
   phile:["PHILE WEB","https://www.phileweb.com/review/column/202610/14/3201.html"],
   ascii:["週刊アスキー","https://weekly.ascii.jp/elem/000/004/312/4312404/2/"],
-  dime:["DIME","https://dime.jp/company_news/detail/?pr=2745838"]
+  dime:["DIME","https://dime.jp/company_news/detail/?pr=2745838"],
+  twInochi:["トラベル Watch（いのちの未来）","https://travel.watch.impress.co.jp/docs/news/2005823.html"],
+  twPlus:["トラベル Watch（いのちの未来＋）","https://travel.watch.impress.co.jp/docs/news/2127798.html"],
+  djInochi:["Discover Japan（いのちの未来）","https://discoverjapan-web.com/article/142396"],
+  djSig:["Discover Japan（シグネチャーパビリオン）","https://discoverjapan-web.com/article/142384"],
+  bt:["美術手帖","https://bijutsutecho.com/magazine/insight/30535?page=4"],
+  ipa:["IPA 石黒浩氏インタビュー","https://www.ipa.go.jp/jinzai/mitou/koubo/topics/expo2025-ishiguro-interview.html"],
+  pwc:["PwC 石黒浩氏インタビュー","https://www.pwc.com/jp/ja/knowledge/column/technology-driven/interview07.html"],
+  dir:["大和総研コラム","https://www.dir.co.jp/report/column/20251016_012332.html"],
+  jst:["サイエンスポータル","http://scienceportal.jst.go.jp/stories/20100329_01-3/"],
+  yt:["万博公式動画「いのちの未来」","https://www.youtube.com/watch?v=EaQ2sVwx62U"]
 };
 const CATS={
   core:{name:"null²ⁿ",color:"#ffffff"},
@@ -293,6 +313,7 @@ const CATS={
   body:{name:"身体と技術",color:"#7fb2ff"},
   line:{name:"系譜と本",color:"#d8b25c"},
   prep:{name:"予習",color:"#7fd1a4"},
+  inochi:{name:"いのちの未来",color:"#3fd0f0"},
   mine:{name:"朝比奈のつながり",color:"#d9a3ff"}
 };
 const N=[
@@ -417,9 +438,45 @@ const N=[
  {id:"tenson",cat:"line",name:"天孫帰るってよ？",sub:"2026｜霧島アートの森",
   text:"2026年夏、鹿児島の霧島アートの森で開かれた落合陽一氏の個展。作家活動の10年を総括する内容で、130点のうちプラチナプリント21点や湿板写真など、古い写真技法の作品も多く並びました。",
   tip:"副読サイトに作品目録があり、写真作品のタイトルも読めます。",src:["cat"]},
- {id:"inochi",cat:"line",name:"いのちの未来",sub:"2025｜石黒浩パビリオン",
-  text:"万博で石黒浩氏がプロデュースしたパビリオン。アンドロイドを通して、これからの人間と命のあり方を描きました。",
-  tip:"アンドロイドの分身と、デジタルの分身。二人で比べてみると面白いはずです。",src:[]},
+ {id:"inochi",cat:"inochi",name:"いのちの未来",sub:"2025｜石黒浩氏のシグネチャーパビリオン",
+  text:"2025年の大阪・関西万博で、石黒浩氏がプロデュースしたシグネチャーパビリオン。「いのちを拡げる」をテーマに、過去・50年後・1000年後の三つのゾーンを巡りながら、人間とアンドロイドの境界があいまいになった未来を体験する展示でした。",
+  tip:"null²ⁿの分身はデジタルの身体、いのちの未来の分身は物質の身体。二人で比べてみると面白いはずです。",src:["twInochi","djInochi","yt"]},
+ {id:"sig",cat:"inochi",name:"8つのシグネチャーパビリオン",
+  text:"大阪・関西万博で、テーマ「いのち輝く未来社会のデザイン」を深めるために設けられた8つのパビリオン。8人のプロデューサーが「いのち」の異なる側面を担当し、null²は「いのちを磨く」、いのちの未来は「いのちを拡げる」、クラゲ館は「いのちを高める」を掲げました。",
+  tip:"同じ「いのち」を、磨く人と拡げる人。二つを並べると、null²ⁿの立ち位置が見えてきます。",src:["djSig"]},
+ {id:"hirogeru",cat:"inochi",name:"いのちを拡げる",
+  text:"大阪・関西万博のパビリオン「いのちの未来」のテーマ。科学技術によって身体や能力をのばし、いのちの範囲そのものを広げていく、という人間観を表しています。",
+  tip:"null²のテーマは「いのちを磨く」。拡げるのか、磨くのか。名前の違いに、二人の態度の違いが出ています。",src:["djInochi","djSig"]},
+ {id:"z1",cat:"inochi",name:"いのちの歩み",sub:"ゾーン1｜過去",
+  text:"大阪・関西万博のパビリオン「いのちの未来」の最初のゾーン。土偶や埴輪、仏像、能面、文楽人形など、日本人がモノに「いのち」を宿してきた歴史をたどり、アンドロイドをその延長線上に位置づけていました。",
+  tip:"参の間に並ぶ道具や機材と比べると、人がモノに何を託してきたのかが見えてきます。",src:["ipa","twInochi"]},
+ {id:"z2",cat:"inochi",name:"50年後の未来",sub:"ゾーン2｜祖母と孫娘の物語",
+  text:"大阪・関西万博のパビリオン「いのちの未来」の中心となったゾーン。人間とアンドロイドが共に暮らす50年後の社会を、祖母と孫娘の物語として体験しました。余命の近い祖母が、記憶をアンドロイドに移すか、自然な死を選ぶかに向き合う場面が描かれました。",
+  tip:"壱の間「さよならホモ・サピエンス」や「死の終焉」と同じ問いを、家族の物語として描いています。",src:["ipa","dir","bt"]},
+ {id:"z3",cat:"inochi",name:"まほろば",sub:"ゾーン3｜1000年後のいのち",
+  text:"大阪・関西万博のパビリオン「いのちの未来」の最後のゾーン。音と光に包まれた空間でアンドロイドが舞い踊り、身体の制約から解き放たれて自由に身体を選ぶ、1000年後の人間の姿を表現していました。「まほろば」は、すばらしい場所を意味する古い言葉です。",
+  tip:"肆の間「潜在空間の夢」で、身体の輪郭がほどけていく感覚と比べてみてください。",src:["bt","djInochi"]},
+ {id:"android",cat:"inochi",name:"アンドロイド",sub:"人間酷似型ロボット",
+  text:"人間そっくりの外見と動きを持つロボット（人間酷似型ロボット）。大阪・関西万博のパビリオン「いのちの未来」には、夏目漱石をモデルにした漱石アンドロイドなど、多くのアンドロイドが登場しました。",
+  tip:"null²ⁿの分身は画面と鏡の中にいて、アンドロイドは重さのある身体を持つ。「質量への憧憬」の視点で見比べると面白いところです。",src:["twInochi"]},
+ {id:"gem",cat:"inochi",name:"ジェミノイド",sub:"イシグロイド（ジェミノイドHI-6）",
+  text:"特定の人物にそっくりに作られた、遠隔操作型のアンドロイド。石黒浩氏が開発し、本人をモデルにしたものは「イシグロイド」と呼ばれます。最新のジェミノイドHI-6は、本人の発言や著書を学習したAIと組み合わさり、本人の考え方に沿って対話できます。",
+  tip:"知識と声と容姿を登録するMirrored Bodyと、ほぼ同じことを物質の身体でやっています。",src:["twPlus","jst"]},
+ {id:"valley",cat:"inochi",name:"不気味の谷",
+  text:"ロボットやCGの見た目が人間に近づくほど親しみは増すものの、ある段階で急に違和感や不気味さが強まる、という現象。1970年にロボット工学者の森政弘氏が提唱しました。人そっくりのアンドロイドを研究する石黒浩氏にとっても、重要なテーマの一つです。",
+  tip:"壱の間で自分の分身に会ったとき、親しみと違和感のどちらが勝つか、確かめてみてください。",src:["jst"]},
+ {id:"avatar",cat:"inochi",name:"アバター共生社会",
+  text:"アバターとは、人が離れた場所から操作したり、自分の代わりに活動させたりする分身（ロボットやCG）のこと。アバター共生社会は、アバターを通して場所や時間に縛られずに働いたり人と関わったりできる社会を指し、国のムーンショット型研究開発事業の目標1が2050年までの実現をめざしています。石黒浩氏は、その研究を率いる一人です。",
+  tip:"Mirrored Bodyで自分の分身を持つことも、アバターと暮らす未来への小さな入口です。",src:["pwc"]},
+ {id:"water",cat:"inochi",name:"水と渚",
+  text:"大阪・関西万博のパビリオン「いのちの未来」の建物は、高さ12mから流れ落ちる水の膜に包まれていました。いのちの起源である「水」と、いのちが広がった「渚」がモチーフです。",
+  tip:"null²は鏡の膜、いのちの未来は水の膜。どちらも、建物の表面が「いのち」を映していました。",src:["djInochi","twInochi"]},
+ {id:"plus",cat:"inochi",name:"いのちの未来＋",sub:"2026｜MoN Takanawa",
+  text:"大阪・関西万博のパビリオン「いのちの未来」を再構成した企画展。2026年7月25日〜9月25日に東京・高輪のMoN Takanawaで開かれ、来館者が「いのちの未来の選択」に向き合う新しい場面が加わりました。",
+  tip:"null²ⁿと同じく、万博のパビリオンが閉幕後に姿を変えて続いた例です。",src:["twPlus"]},
+ {id:"anim",cat:"idea",name:"アニミズム",
+  text:"ものや自然の中に、魂やいのちが宿っていると考える世界観。日本の八百万の神の考え方もその一つです。落合陽一氏は、この見方を計算機自然と結びつけて論じています。",
+  tip:"モノにいのちを宿してきた歴史（いのちの未来）と、計算機が自然になる世界（null²ⁿ）。二つのパビリオンをつなぐ言葉です。",src:["essay","ipa"]},
 
  {id:"gits",cat:"prep",name:"攻殻機動隊",sub:"1995｜押井守監督・約80分",
   text:"身体のほとんどが機械の主人公が、自分の魂（ゴースト）は本物なのかを問い続けるアニメ映画。",
@@ -448,7 +505,22 @@ const N=[
   tip:"参の間に並ぶカメラの中に、私の知っている機種があるか探してみたいと思っています。",src:[]},
  {id:"aqua",cat:"mine",name:"ネイチャーアクアリウム",sub:"作品「せめぎ合う生命」",
   text:"私がつくった水槽の作品です。水草と魚と微生物が、ガラスの中で一つの小さな自然になる。",
-  tip:"人がつくった自然。計算機自然の考え方と、どこか似ていると感じています。",src:[]}
+  tip:"人がつくった自然。計算機自然の考え方と、どこか似ていると感じています。",src:[]},
+ {id:"memvid",cat:"mine",name:"思い出ビデオ",sub:"1本10分×9本＝90分の映画",
+  text:"担任として1年生から3年生まで受け持った生徒たちを、1年に3本、3年間で9本の映像にまとめました。1本10分、9本をつなぐと90分の一本の映画になるように少しずつ作り、その時々に上映してきました。その時代の流行や青春を、あとで見返したときに思い出せるように工夫しています。",
+  tip:"null²の記録映画『さようなら、ホモサピエンス』も、消えていく体験を映像に残す試みです。記録が、のちに記憶になる。そこが重なります。",src:[]},
+ {id:"hero",cat:"mine",name:"一人ひとりを映す鏡",
+  text:"受け持った生徒には、小中学校で不登校を経験した子が多くいました。思い出ビデオをつくった一番の理由は、「ちゃんと見ているよ、あなたが主人公だよ」と伝えたかったからです。",
+  tip:"null²ⁿでは、来場者一人ひとりの分身が演出に登場します。見られること、映されることが、その人がそこにいることを確かめてくれる。",src:[]},
+ {id:"album",cat:"mine",name:"記録と記憶",sub:"映像に残すこと、思い出すこと",
+  text:"写真や映像に残した記録は、時間がたつと、本人やまわりの人の記憶をよみがえらせるものになります。保護者会で生徒の姿を収めた映像を上映したとき、それまで写真がほとんど残っていなかった生徒の保護者が、自分の子が映像や写真に収まっていることに、とても感動していました。記録に残ることは、その人がそこにいたという証しになるのだと実感しました。",
+  tip:"null²ⁿは、来場者の身体をデジタルの記録として映し出します。記録された分身は、本人の記憶とどう違うのか。「死の終焉」の問いとも重なります。",src:[]},
+ {id:"faces",cat:"mine",name:"撮ることは、覚えること",
+  text:"映像づくりを通して、ひと学年およそ180人の顔と名前、その様子を知ることができました。担任団の中で、一番よく知っていたと自負しています。",
+  tip:"Mirrored Bodyは、知識と声と容姿から一人の分身をつくります。私は撮ることを通して、一人ひとりを覚えていきました。",src:[]},
+ {id:"gaze",cat:"mine",name:"二つのまなざし",sub:"大人が撮る写真・子どもが撮る写真",
+  text:"写真は機会あるごとに撮り、生徒たちが自分で撮った写真も集めて、映像や学年通信に使いました。大人が撮る写真と、子ども同士で撮る写真では、表情がまったく違います。どちらが本当の表情かではなく、どちらもその生徒なのだと気づき、物事を多角的に見ることの大切さを知りました。",
+  tip:"合わせ鏡のように、いくつもの方向から映して初めて見える姿がある。「ある」「ない」「そのあわい」で考えるテトラレンマにも通じます。",src:[]}
 ];
 const E=[
  ["n2n","gate"],["n2n","r1"],["n2n","r2"],["n2n","r3"],["n2n","r4"],["n2n","r5"],["n2n","null2"],["n2n","mirror"],["n2n","mb"],["n2n","led"],["n2n","null"],["n2n","null4"],
@@ -467,8 +539,56 @@ const E=[
  ["null4","hakko"],["null4","joryu"],["null4","conv"],["null4","tetra"],["null4","mani"],["null4","alife"],["hakko","joryu"],
  ["death","bm"],["death","film"],
  ["null2","move"],["null2","film"],["null2","video"],["null2","expo25"],["null2","membrane"],["expo25","inochi"],
- ["tenson","butsuka"],["tenson","cyano"],["butsuka","kocho"],["cyano","dark"],["aqua","alife"],["tool","dark"]
+ ["tenson","butsuka"],["tenson","cyano"],["butsuka","kocho"],["cyano","dark"],["aqua","alife"],["tool","dark"],
+ ["inochi","sig"],["null2","sig"],["inochi","hirogeru"],["null2","hirogeru"],["sig","hirogeru"],
+ ["inochi","z1"],["inochi","z2"],["inochi","z3"],["z1","z2"],["z2","z3"],
+ ["z1","r3"],["z1","tool"],["z1","anim"],["anim","ku"],["anim","dn"],
+ ["z2","death"],["z2","r1"],["z2","android"],["z3","r4"],["z3","avatar"],
+ ["android","gem"],["android","dh"],["android","valley"],["gem","mb"],["gem","valley"],["valley","r1"],
+ ["avatar","mb"],["avatar","dh"],["avatar","inochi"],
+ ["water","inochi"],["water","membrane"],["water","aqua"],
+ ["plus","inochi"],["plus","n2n"],["plus","gem"],
+ ["memvid","film"],["memvid","dark"],["memvid","hero"],["memvid","album"],["memvid","faces"],
+ ["hero","mb"],["hero","mirror"],["album","mirror"],["album","death"],["album","hero"],
+ ["faces","mb"],["faces","dh"],["faces","gaze"],
+ ["gaze","awase"],["gaze","tetra"],["gaze","kocho"],["gaze","r5"],["gaze","memvid"]
 ];
+window.NX={SRC,CATS,N,E,entered:null,ready:false};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function enter(name){
+  if(NX.entered!==null)return;NX.entered=name||"";
+  if(NX.onEnter){NX.onEnter(NX.entered);return}
+  const g=$("gate");g.classList.add("out");setTimeout(()=>{g.hidden=true},1300);
+}
+$("gateForm").addEventListener("submit",e=>{e.preventDefault();enter($("gateName").value)});
+$("gateSkip").addEventListener("click",()=>enter(""));
+// 3Dが表示できないときは、ことばの一覧で読めるようにする
+NX.fail=function(){
+  if(NX.ready||$("fallback"))return;
+  const g=$("gate");g.hidden=true;$("loading").hidden=true;
+  const box=document.createElement("section");box.id="fallback";box.className="fallback";
+  let h=`<div class="fb-in"><span class="label">NULL²ⁿ YOKOHAMA <span class="s">/</span> FIELD MAP</span><h1>ヌルの森を歩く</h1>
+   <p class="fb-note">この画面では3Dの森を表示できませんでした。インターネットにつながっているか確認するか、ブラウザで開き直してください。ことばは下の一覧から読めます。</p>`;
+  Object.keys(CATS).forEach(k=>{
+    const items=N.filter(n=>n.cat===k);if(!items.length)return;
+    h+=`<h2><span class="dot" style="--dc:${CATS[k].color}"></span>${esc(CATS[k].name)}</h2>`;
+    items.forEach(n=>{h+=`<details><summary>${esc(n.name)}${n.sub?`<small>${esc(n.sub)}</small>`:""}</summary>${n.feel?`<p class="fb-feel">${esc(n.feel)}</p>`:""}<p>${esc(n.text)}</p><p class="fb-tip">${esc(n.tip)}</p></details>`});
+  });
+  h+=`</div>`;box.innerHTML=h;document.body.appendChild(box);
+};
+addEventListener("error",()=>{if(!NX.ready)NX.fail()});
+setTimeout(()=>{if(!NX.ready)NX.fail()},20000);
+})();
+</script>
+<script type="module" onerror="window.NX&&NX.fail()">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const {SRC,CATS,N,E}=window.NX;
 const byId=Object.fromEntries(N.map(n=>[n.id,n]));
 const nb={};N.forEach(n=>nb[n.id]=new Set());E.forEach(([a,b])=>{nb[a].add(b);nb[b].add(a)});
 const ROOMS=["gate","r1","r2","r3","r4","r5"];
@@ -571,7 +691,7 @@ function fitLabel_(s){fitLabel(s);return s}
 
 /* ───────── 配置（部屋は輪、他は力学で浮かぶ） ───────── */
 let seed=7;const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
-const SHELL={core:0,room:115,idea:215,body:190,line:245,prep:255,mine:250};
+const SHELL={core:0,room:115,idea:215,body:190,line:245,prep:255,inochi:240,mine:250};
 const fixed=n=>n.cat==="core"||n.cat==="room";
 N.forEach(n=>{
   if(n.cat==="core"){n.home=new THREE.Vector3(0,0,0);return}
@@ -853,13 +973,13 @@ renderer.domElement.addEventListener("pointermove",e=>{
 let started=false,bloomT0=0;
 function enterGate(name){
   if(started)return;
-  if(!reduceMotion)scatter(name&&name.trim()?name.trim():"名前　肩書き");
+  const g0=$("gate");
+  if(!reduceMotion&&!g0.hidden&&!g0.classList.contains("out"))scatter(name&&name.trim()?name.trim():"名前　肩書き");
   const gate=$("gate");gate.classList.add("out");setTimeout(()=>{gate.hidden=true},1300);
   started=true;bloomT0=performance.now();
   setTimeout(()=>{if(!narrow()&&$("panel").hidden&&!tourOn)showAbout()},reduceMotion?50:2600);
 }
-$("gateForm").addEventListener("submit",e=>{e.preventDefault();enterGate($("gateName").value)});
-$("gateSkip").onclick=()=>enterGate("");
+window.NX.onEnter=enterGate;
 // 名前の文字が粒になってほどける
 function scatter(text){
   const cv=$("dust"),dpr=DPR;cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;const x=cv.getContext("2d");
@@ -917,6 +1037,9 @@ addEventListener("resize",()=>{camera.fov=narrow()?66:52;camera.aspect=innerWidt
 addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("quiz").hidden)$("quiz").hidden=true;else if(tourOn)endTour();else{closePanel();clearFocus()}}});
 applyFocus();
 requestAnimationFrame(loop);
+// 準備ができた合図。門を先にくぐっていたら、ここで森をひらく
+window.NX.ready=true;$("loading").hidden=true;
+if(window.NX.entered!==null)enterGate(window.NX.entered);
 // フォントが届いたら文字を描き直す
 document.fonts&&document.fonts.ready.then(()=>{
   N.forEach(n=>{const old=n.label,s=makeLabel(n);
