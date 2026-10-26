@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ヌルの森を歩く</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<style>
+body{margin:0}
+/* Layout: 全画面の黒い空間に3Dのことばの森。鏡の床に映り込む。左上に題、右にパネル（スマホは下から出るシート）、下に操作。単一の黒テーマ。 */
+:root{
+  color-scheme:dark;
+  --void:#040405;
+  --ink:#ecebe6;
+  --dim:#9c9a94;
+  --hair:rgba(236,235,230,.14);
+  --panel:rgba(8,8,10,.84);
+  --panel-solid:#0c0c0e;
+  --shu:#e64a2e;
+  --f-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-label:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--void);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.8;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--shu);outline-offset:2px}
+a{color:var(--ink)}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;touch-action:none}
+.label{font-family:var(--f-label);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.label .s{color:var(--shu)}
+
+/* 上部 */
+.top{position:fixed;z-index:5;top:0;left:0;right:0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding-top:calc(16px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top>*{pointer-events:auto}
+.brand{display:grid;gap:6px;max-width:30em;min-width:0}
+.brand h1{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4.2vw,44px);line-height:1.1;margin:0;letter-spacing:.02em;text-shadow:0 0 24px rgba(0,0,0,.8)}
+.brand h1 sup{font-size:.5em}
+.brand .rule{width:44px;border-top:1.5px solid var(--shu)}
+.brand p{margin:0;color:var(--dim);font-size:13px}
+.topr{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.count{display:grid;justify-items:end;text-align:right}
+.count b{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,38px);line-height:1.1;color:var(--ink);white-space:nowrap}
+.count b em{font-style:normal;color:var(--shu)}
+.btn{border:1px solid var(--hair);background:var(--panel);border-radius:2px;padding:9px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:14px;line-height:1.3}
+.btn:hover{border-color:rgba(236,235,230,.4)}
+.btn.small{padding:6px 12px;font-size:13px}
+.btn.primary{background:var(--shu);border-color:var(--shu);color:#fff;font-weight:700;box-shadow:0 0 28px rgba(230,74,46,.45)}
+
+/* 凡例 */
+.legend{position:fixed;z-index:4;left:max(16px,env(safe-area-inset-left,0px));top:calc(190px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px}
+.legend button{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--hair);border-radius:2px;padding:4px 12px 4px 8px;font-size:12.5px;text-align:left;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.legend button[aria-pressed="false"]{opacity:.38}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--dc);flex:none;box-shadow:0 0 10px var(--dc)}
+
+/* 下部 */
+.dock{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 32px)}
+.hint{position:fixed;z-index:3;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));text-align:right;pointer-events:none}
+
+/* パネル */
+.panel{position:fixed;z-index:7;top:calc(130px + env(safe-area-inset-top,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));width:min(400px,calc(100% - 32px));
+  background:var(--panel);border:1px solid var(--hair);border-top:1.5px solid var(--shu);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;flex-direction:column;overflow:hidden}
+.panel header{display:flex;align-items:center;gap:8px;padding:12px 10px 4px 18px}
+.panel header .label{flex:1;min-width:0}
+.x{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 8px;color:var(--dim)}
+.panel .body{overflow-y:auto;padding:4px 18px 20px;min-height:0;display:grid;gap:14px;align-content:start}
+.panel h2{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,3vw,32px);line-height:1.25;margin:0;text-wrap:balance}
+.sub{margin:-8px 0 0;color:var(--dim);font-size:13px}
+.panel p{margin:0}
+.feel{display:flex;align-items:baseline;gap:12px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);padding:8px 0}
+.feel b{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1.1;color:var(--shu)}
+.tip{border-left:1.5px solid var(--shu);padding:2px 0 2px 12px;display:grid;gap:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hair);background:transparent;border-radius:2px;padding:3px 10px;font-size:13px}
+.chip:hover{border-color:rgba(236,235,230,.45)}
+.src{font-size:12px;color:var(--dim)}
+.src a{color:var(--dim);text-underline-offset:3px}
+.grp{display:grid;gap:6px}
+.grp h3{margin:6px 0 0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em}
+.howto{display:grid;gap:4px;font-size:13px;color:var(--dim);border-top:1px solid var(--hair);padding-top:12px}
+.sig{text-align:right;font-family:var(--f-display);font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+ul.todo{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+ul.todo li{border-bottom:1px solid var(--hair)}
+ul.todo label{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 0;cursor:pointer}
+ul.todo .n{font-family:var(--f-label);font-size:12px;color:var(--shu);padding-top:3px}
+ul.todo small{display:block;color:var(--dim)}
+ul.todo input{width:18px;height:18px;margin-top:4px;accent-color:var(--shu)}
+
+/* 部屋めぐり */
+.tour{position:fixed;z-index:8;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));
+  background:var(--panel);border:1px solid var(--hair);border-top:1.5px solid var(--shu);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:12px 16px 14px;display:grid;gap:8px}
+.tour-head{display:flex;align-items:center;gap:10px}
+.tour-head .label{flex:1}
+.tour h2{font-family:var(--f-display);font-weight:800;font-size:clamp(22px,4vw,28px);margin:0;line-height:1.25}
+.tour .en{color:var(--dim);font-size:12.5px;margin:-4px 0 0}
+.tour p{margin:0;font-size:14px}
+.tour-nav{display:flex;justify-content:space-between;gap:8px}
+.steps{display:flex;gap:4px;align-items:center}
+.steps i{width:20px;height:3px;background:rgba(236,235,230,.2)}
+.steps i.on{background:var(--shu)}
+.bigword{position:fixed;z-index:4;left:0;right:0;top:30%;text-align:center;pointer-events:none;font-family:var(--f-display);font-weight:800;
+  font-size:clamp(64px,15vw,170px);line-height:1;color:var(--ink);opacity:0;letter-spacing:.08em;text-shadow:0 0 40px rgba(230,74,46,.55)}
+.bigword.show{animation:word 2.8s ease forwards}
+@keyframes word{0%{opacity:0;filter:blur(14px);transform:scale(1.06)}25%{opacity:.92;filter:blur(0);transform:scale(1)}70%{opacity:.92}100%{opacity:0;filter:blur(6px)}}
+.dark{position:fixed;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none;transition:opacity 1.2s ease}
+.dark.on{opacity:.9}
+body.touring .dock,body.touring .legend{display:none}
+
+/* 門（最初の画面） */
+.gate{position:fixed;inset:0;z-index:20;background:var(--void);display:grid;place-items:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));transition:opacity 1.2s ease}
+.gate.out{opacity:0;pointer-events:none}
+.gate .mirror{position:absolute;inset:0;background:
+  radial-gradient(60% 50% at 50% 50%,rgba(236,235,230,.07),transparent 70%),
+  linear-gradient(90deg,transparent calc(50% - 1px),rgba(236,235,230,.35) 50%,transparent calc(50% + 1px));pointer-events:none}
+.gate-in{position:relative;display:grid;gap:18px;justify-items:center;text-align:center;max-width:34em;background:radial-gradient(closest-side,rgba(4,4,5,.92),rgba(4,4,5,.6) 70%,transparent);padding:24px 8px}
+.gate h2{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,52px);line-height:1.35;margin:0;text-wrap:balance}
+.gate p{margin:0;color:var(--dim);font-size:14px}
+.gate .field{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
+.gate input{background:rgba(236,235,230,.05);border:1px solid var(--hair);border-radius:2px;color:var(--ink);font:inherit;padding:10px 12px;width:min(320px,100%)}
+.gate input::placeholder{color:#77756f}
+.skip{border:0;background:transparent;color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:13px;padding:4px}
+#dust{position:fixed;inset:0;z-index:21;pointer-events:none;width:100%;height:100%}
+
+/* 診断 */
+.sheet-wrap{position:fixed;inset:0;z-index:12;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet{width:min(560px,100%);max-height:min(90vh,720px);background:var(--panel-solid);border:1px solid var(--hair);border-top:1.5px solid var(--shu);display:flex;flex-direction:column;overflow:hidden}
+.sheet header{display:flex;align-items:center;gap:8px;padding:12px 10px 4px 20px}
+.sheet header .label{flex:1}
+.sheet .body{padding:6px 20px 20px;overflow-y:auto;display:grid;gap:14px}
+.sheet h2{font-family:var(--f-display);font-weight:800;font-size:clamp(22px,4vw,28px);margin:0;line-height:1.35;text-wrap:balance}
+.sheet p{margin:0}
+.choices{display:grid;gap:8px}
+.choice{border:1px solid var(--hair);background:rgba(236,235,230,.03);border-radius:2px;padding:12px 14px;text-align:left;font-size:15px}
+.choice:hover{border-color:var(--shu)}
+.result b{font-family:var(--f-display);font-weight:800;font-size:clamp(40px,9vw,64px);color:var(--shu);line-height:1.1;display:block}
+.result .sub{margin:4px 0 0}
+
+.tooltip{position:fixed;z-index:9;pointer-events:none;background:var(--panel-solid);border:1px solid var(--hair);padding:4px 10px;font-size:13px;transform:translate(12px,12px)}
+
+@media (max-width:1100px){.hint{display:none}}
+@media (max-width:760px){
+  .legend{display:none}
+  .brand p{display:none}
+  .dock{gap:6px}
+  .dock .btn{padding:8px 10px;font-size:13px;white-space:nowrap}
+  .panel{top:auto;left:0;right:0;width:auto;bottom:0;height:60%;border-left:0;border-right:0;
+    padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  body.panel-open .dock{display:none}
+  .bigword{top:24%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="stage" aria-label="null2nにまつわる言葉の3Dネットワーク図"></div>
+<div class="dark" id="dark"></div>
+<div class="bigword" id="bigword" aria-hidden="true"></div>
+
+<div class="top">
+  <div class="brand">
+    <span class="label">NULL²ⁿ YOKOHAMA <span class="s">/</span> FIELD MAP</span>
+    <h1>ヌルの森を歩く</h1>
+    <div class="rule"></div>
+    <p>六つの部屋と、その奥にある思想、万博からnull⁴へ続く系譜。光る点をたどって、ヌルの森を歩いてみてください。</p>
+  </div>
+  <div class="topr">
+    <div class="count" id="count" aria-live="polite"></div>
+  </div>
+</div>
+
+<nav class="legend" id="legend" aria-label="ことばの種類"></nav>
+
+<div class="dock" id="dock">
+  <button class="btn primary" id="tourBtn">六つの部屋を巡る</button>
+  <button class="btn" id="resetView">全体を見る</button>
+  <button class="btn" id="quizBtn">ヌル診断</button>
+  <button class="btn" id="listBtn">一覧</button>
+  <button class="btn" id="todoBtn">当日までに</button>
+</div>
+<div class="hint label">DRAG 回転 <span class="s">/</span> WHEEL・PINCH 拡大縮小 <span class="s">/</span> TAP ひらく</div>
+
+<aside class="panel" id="panel" hidden aria-live="polite">
+  <header><span class="label" id="panelLabel"></span><button class="x" id="panelClose" aria-label="閉じる">×</button></header>
+  <div class="body" id="panelBody"></div>
+</aside>
+
+<section class="tour" id="tour" hidden aria-label="六つの部屋を巡る">
+  <div class="tour-head"><span class="label" id="tourLabel"></span><div class="steps" id="tourSteps"></div><button class="x" id="tourClose" aria-label="部屋めぐりを終える">×</button></div>
+  <h2 id="tourTitle"></h2>
+  <p class="en" id="tourEn"></p>
+  <p id="tourText"></p>
+  <div class="tour-nav"><button class="btn small" id="tourPrev">前の部屋</button><button class="btn small" id="tourMore">くわしく</button><button class="btn small primary" id="tourNext">次の部屋へ</button></div>
+</section>
+
+<div class="sheet-wrap" id="quiz" hidden role="dialog" aria-modal="true" aria-labelledby="quizLabel">
+  <div class="sheet">
+    <header><span class="label" id="quizLabel">NULL DIAGNOSIS</span><button class="x" id="quizClose" aria-label="閉じる">×</button></header>
+    <div class="body" id="quizBody"></div>
+  </div>
+</div>
+
+<div class="gate" id="gate">
+  <div class="mirror"></div>
+  <div class="gate-in">
+    <span class="label">GATE <span class="s">/</span> 皆空鏡門</span>
+    <h2>名前と肩書きを、<br>ここに置いていく。</h2>
+    <p>null²ⁿの最初の部屋「門」では、鏡の門をくぐりながら、名前や肩書きを手放していきます。このマップも、門から始めましょう。</p>
+    <form class="field" id="gateForm">
+      <input id="gateName" type="text" maxlength="12" placeholder="あなたの名前（入れなくてもOK）" aria-label="あなたの名前" autocomplete="off">
+      <button class="btn primary" type="submit">門をくぐる</button>
+    </form>
+    <button class="skip" id="gateSkip">すぐに地図を見る</button>
+  </div>
+</div>
+<canvas id="dust" aria-hidden="true"></canvas>
+<div class="tooltip" id="tooltip" hidden></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ───────── ことばのデータ ───────── */
+const SRC={
+  nexus:["null²ⁿ 公式","https://null2.nexus/"],
+  null2:["null² 公式（万博）","https://expo2025.digitalnatureandarts.or.jp/"],
+  null4:["null⁴ 公式","https://null4.art/"],
+  tetra:["テトラヌル 公式","https://expo2027.digitalnatureandarts.or.jp/"],
+  matagi:["マタギドライヴ 副読サイト","https://yoichiochiai.com/matagi/"],
+  gloss:["副読サイト 用語解説","https://yoichiochiai.com/matagi/glossary/"],
+  essay:["副読エッセイ","https://yoichiochiai.com/matagi/essay/"],
+  magic:["魔法の世紀 副読ページ","https://yoichiochiai.com/matagi/magic/"],
+  dnb:["デジタルネイチャー 副読ページ","https://yoichiochiai.com/matagi/digitalnature/"],
+  cat:["天孫帰るってよ？ 作品目録","https://yoichiochiai.com/matagi/catalogue/"],
+  tab:["Tokyo Art Beat","https://www.tokyoartbeat.com/articles/-/yoichi-ochiai-null2n-news-202610"],
+  happy:["ハピエル 開幕レポート","https://happyell.co.jp/null2n-yokohama-landmark"],
+  phile:["PHILE WEB","https://www.phileweb.com/review/column/202610/14/3201.html"],
+  ascii:["週刊アスキー","https://weekly.ascii.jp/elem/000/004/312/4312404/2/"],
+  dime:["DIME","https://dime.jp/company_news/detail/?pr=2745838"]
+};
+const CATS={
+  core:{name:"null²ⁿ",color:"#ffffff"},
+  room:{name:"六つの部屋",color:"#e64a2e"},
+  idea:{name:"思想とことば",color:"#e9e6dd"},
+  body:{name:"身体と技術",color:"#7fb2ff"},
+  line:{name:"系譜と本",color:"#d8b25c"},
+  prep:{name:"予習",color:"#7fd1a4"},
+  mine:{name:"朝比奈のつながり",color:"#d9a3ff"}
+};
+const N=[
+ {id:"n2n",cat:"core",name:"null²ⁿ",sub:"ヌルヌルネクサス｜横浜ランドマークプラザ 5F",
+  text:"大阪・関西万博のシグネチャーパビリオン「null²」が、横浜で常設のミュージアムシアターとして生まれ変わったもの。六つの部屋と二つの大型LEDシアターを、約60分かけて巡ります。テーマは「鏡の再発明」。",
+  tip:"完全日時指定・事前予約制。入口で靴にシューズカバーを付け、荷物は前に抱えて歩きます。撮影はOK（フラッシュ不可）。",src:["nexus","tab"]},
+
+ {id:"gate",cat:"room",no:0,name:"門",en:"GATE",sub:"皆空鏡門",feel:"震える",
+  text:"鏡の門をくぐり、名前や肩書きをここに置いていく導入の部屋。万博のnull²の外装と同じ鏡の膜に包まれ、低い音が身体に響きます。",
+  tip:"万博で外から眺めた、あの銀色の建物の「内側」に入る瞬間です。Mirrored Bodyとの連携も、ここから始まります。",src:["nexus","happy"]},
+ {id:"r1",cat:"room",no:1,name:"壱の間",en:"FIRST ROOM",sub:"さよならホモ・サピエンス",feel:"戸惑う",
+  text:"意味がつかめないまま、何かを手放していく儀式のような部屋。鏡とLEDに囲まれたシアターで、デジタルヒューマンになった自分や人工生命が現れます。万博のミラーシアターから、LEDの面が5面に増えました。",
+  tip:"アプリで分身を作っておくと、自分の分身が演出に登場することがあります。",src:["nexus","happy"]},
+ {id:"r2",cat:"room",no:2,name:"弐の間",en:"SECOND ROOM",sub:"無眼界の夢",feel:"整う",
+  text:"完全な暗闇の中で、座って音だけを受け取る部屋。映像はまったくありません。声や気配が、身体のまわりのいろいろな場所から聞こえてきます。",
+  tip:"スマホの画面の明かりも控えるよう案内されます。通知は事前にオフに。",src:["nexus","happy"]},
+ {id:"r3",cat:"room",no:3,name:"参の間",en:"THIRD ROOM",sub:"質量への憧憬",feel:"驚く",
+  text:"古今東西の発明品や機材が並ぶギャラリーを、歩き回って鑑賞する部屋。並んだカメラや道具が、ときどき音を立てたり動き出したりします。「質量への憧憬」は、情報化で重さを失った世界で、ものの重さや手ざわりを求める感覚を表す、落合さんが長く使ってきた言葉です。",
+  tip:"懐かしい道具を一つ見つけて、あとで教え合いましょう。1回では全部の仕掛けに気づけないそうです。",src:["nexus","happy","essay"]},
+ {id:"r4",cat:"room",no:4,name:"肆の間",en:"FOURTH ROOM",sub:"潜在空間の夢",feel:"トぶ",
+  text:"AIが世界をとらえる「潜在空間」の映像に包まれる、鏡とLEDのもう一つのシアター。来場者の動きに反応する仕掛けもあり、最後に送り出されるように体験が締めくくられます。",
+  tip:"強い光の明滅や大きな音があります。ホラーや驚かし演出はないそうです。",src:["nexus","happy"]},
+ {id:"r5",cat:"room",no:5,name:"橋",en:"BRIDGE",sub:"記号の彼岸",feel:"また来る",
+  text:"鏡越しに、通ってきた部屋が見える出口。写真を撮る場所でもあります。ここにも仕掛けがあり、万博の体験者には「そういうことだったのか」と気づける種明かしがあるそうです。",
+  tip:"見終わったら、二人で「どこで何に気づいたか」を出し合いましょう。",src:["nexus","happy"]},
+
+ {id:"null",cat:"idea",name:"ヌル（null）",
+  text:"プログラミングで「何もない」を表す言葉。落合さんはこれを仏教の「空」と重ねて、null²という名前にしました。",
+  tip:"「ヌルヌル」という響きは、ここから来ています。",src:["null4"]},
+ {id:"ku",cat:"idea",name:"色即是空",
+  text:"形あるもの（色）には固定した実体がなく（空）、空がそのまま形として現れる、という般若心経の言葉。null²の根っこにある考え方です。",
+  tip:"null⁴では「色即是ﾇﾙ、ﾇﾙ即是色。」と言い換えられています。",src:["null2","tetra"]},
+ {id:"hannya",cat:"idea",name:"般若心経",
+  text:"部屋の名前の「皆空」（照見五蘊皆空）と「無眼界」は、どちらも般若心経の一節から来ています。",
+  tip:"部屋の名前に注目すると、その部屋で何を手放すのかが少し見えてきます。",src:["nexus"]},
+ {id:"dn",cat:"idea",name:"計算機自然",sub:"デジタルネイチャー",
+  text:"コンピュータが空気や森のように身のまわりへ溶け込み、自然と人工の境目が消えていく状態。落合さんが2015年から掲げている、作品の中心にある考え方です。",
+  tip:"水田も、もとは人工の水利技術なのに今は「自然」に見える。技術も時間がたつと自然になっていく、という見方です。",src:["gloss","dnb"]},
+ {id:"mirror",cat:"idea",name:"鏡の再発明",
+  text:"null²のテーマ。来場者の身体をデジタル化し、有機的に変形しながら自律して動く身体と対話させる。それを「有史以来、行われてこなかった鏡の再発明」と呼んでいます。",
+  tip:"鏡に映るのは、いまの自分か、データになった自分か。",src:["null2","nexus"]},
+ {id:"kigou",cat:"idea",name:"記号を手放す",
+  text:"名前、肩書き、意味。人がまとっている「記号」を少しずつ手放していくことが、部屋を巡る体験の流れになっています。万博のミラーシアターでも「記号を手放す儀式」が進みました。",
+  tip:"門で名前を置き、橋で「記号の彼岸」に着く。順路そのものが一つの物語です。",src:["nexus","ascii"]},
+ {id:"butsuka",cat:"idea",name:"物化",
+  text:"荘子に由来する言葉で、ものが別のものへ移り変わっていくこと。落合さんは作品を、光や波が姿を変えていく過程として捉えています。",
+  tip:"「胡蝶の夢」の話の結びに出てくる言葉です。",src:["essay","cat"]},
+ {id:"kocho",cat:"idea",name:"胡蝶の夢",
+  text:"夢で蝶になった荘子が、目覚めて「自分が蝶の夢を見たのか、蝶が自分の夢を見ているのか」と迷う話。夢と現実、データと物質の境目のあいまいさを考える補助線です。",
+  tip:"弐の間「無眼界の夢」、肆の間「潜在空間の夢」。二つの部屋の名前に「夢」が入っています。",src:["gloss"]},
+ {id:"latent",cat:"idea",name:"潜在空間",
+  text:"AIが学んだことを、たくさんの数の組み合わせとして整理している見えない空間。絵を生み出すAIは、この空間の中を移動しながら画像を作ります。",
+  tip:"肆の間は、AIの頭の中に入っていくような体験です。",src:["nexus","happy"]},
+ {id:"alife",cat:"idea",name:"人工生命",
+  text:"コンピュータの中で、生き物のように生まれたり動いたりするプログラム。万博のnull²にも、人工生命が自律的に生まれ続けるモードがありました。",
+  tip:"null⁴の鏡面体も「光や風や人の動きに応じて振る舞いを変える人工生命体」と説明されています。",src:["ascii","null4"]},
+ {id:"death",cat:"idea",name:"死の終焉",
+  text:"デジタルの分身が話し続けるなら、まわりの人にとっての「死」（三人称の死）はどう変わるのか。『マタギドライヴ』の序章の題にも出てくる、null²の根っこにある問いです。",
+  tip:"壱の間の「さよならホモ・サピエンス」と重ねて考えてみてください。",src:["matagi","essay"]},
+ {id:"conv",cat:"idea",name:"ホモ・コンヴィヴィウム",sub:"饗宴するヒト",
+  text:"副読エッセイの題。冒頭の一文は「知性は天気になった。僕らに残るのは饗宴である。」AIが当たり前になった世界で、人に残る営みを考えています。",
+  tip:"null⁴を形づくる要素の一つにも挙げられています。",src:["essay","tetra"]},
+ {id:"hakko",cat:"idea",name:"発酵",
+  text:"時間をかけて熟成し、姿を変えていくこと。null⁴では、鏡の回転が花壇や空や影を混ぜ合わせる「デジタル発酵槽」と表現されています。",
+  tip:"「蒸留が引き、発酵が足す。」",src:["null4","tetra"]},
+ {id:"joryu",cat:"idea",name:"蒸留",
+  text:"余分なものを取り除いて、本質だけを取り出すこと。null⁴は、四つに分かれた気配を通して、知覚や記憶の輪郭を少しずつほどく「蒸留装置」とも呼ばれます。",
+  tip:"「人間が空になるとき風景が満ちる。」",src:["null4","tetra"]},
+ {id:"tetra",cat:"idea",name:"テトラレンマ",
+  text:"「あるもの」「ないもの」「そのあわい」「まだ名づけられていないもの」の四つで世界をとらえる、仏教由来の論理（四句分別）。null⁴の四つの鏡面体は、それぞれこの論理を帯びています。",
+  tip:"「テトラ」は4。null⁴（テトラヌル）の名前とも響き合います。",src:["null4","tetra"]},
+
+ {id:"mb",cat:"body",name:"Mirrored Body",sub:"ミラードボディ",
+  text:"公式アプリ。自分の「知識」「声」「容姿」を登録すると、AIで話したり動いたりする分身ができます。null²は、このデジタルの身体による「合わせ鏡」として来場者を映します。",
+  tip:"アプリは任意。入れておくと優先予約や特別演出などの利点があるそうです。登録するなら当日までに。",src:["nexus","tab"]},
+ {id:"dh",cat:"body",name:"デジタルヒューマン",
+  text:"物理的な身体とデジタルの身体の両方を持ち、それが互いに影響し合う。『マタギドライヴ』の用語解説にも載っている考え方です。",
+  tip:"会場で自分の分身に会ったら「似てる？似てない？」を話してみてください。",src:["gloss"]},
+ {id:"awase",cat:"body",name:"合わせ鏡",
+  text:"鏡を向かい合わせると、像が奥へ果てしなく続く。null²は、デジタルの身体による合わせ鏡として、風景を変換しながら来場者を映します。",
+  tip:"手鏡と洗面所の鏡で試すと、壱の間のちょっとした予習になります。",src:["nexus"]},
+ {id:"membrane",cat:"body",name:"ミラーメンブレン",sub:"鏡の膜",
+  text:"null²の外装に使われた、伸び縮みする鏡の膜。万博では建物そのものがうねるように動きました。null⁴の鏡面体にも、反射率98%の膜が使われます。",
+  tip:"とても傷つきやすいので、館内の鏡には触れない・もたれないこと。",src:["nexus","null4"]},
+ {id:"led",cat:"body",name:"LEDシアター",
+  text:"null²ⁿには大型のLEDシアターが二つあります。万博では1部屋だったものが2部屋になり、落合さんは「万博をリバイバルしたというより、4倍以上でやってみた」と話しています。",
+  tip:"壱の間と肆の間、二つの鏡の部屋の違いを比べてみてください。",src:["nexus","happy"]},
+ {id:"scan",cat:"body",name:"3Dスキャン",
+  text:"万博では、スマホのアプリで自分の姿を3Dスキャンし、それをMirrored Bodyに取り込んで、自分そっくりのデジタルヒューマンを作りました。",
+  tip:"風でひらひらする服は、スキャンに向かないそうです。",src:["ascii"]},
+ {id:"ai",cat:"body",name:"生成AI",
+  text:"分身が話す言葉や、潜在空間の映像を生み出す技術。null²ⁿは約50台のコンピュータを並列で動かしていて、いちばん苦労したのは電気の容量だったそうです。",
+  tip:"万博のnull²は、ワークステーション5台と小さなマシン十数台で動いていました。",src:["phile"]},
+ {id:"tool",cat:"body",name:"道具",
+  text:"人類はおよそ300万年、道具を作って使ってきました。落合さんは、AIの登場で人間が「道具を自分の手で作る」段階を卒業しつつあると話しています。",
+  tip:"参の間に並ぶ道具は、その長い歴史の標本のようなものです。",src:["phile"]},
+
+ {id:"null2",cat:"line",name:"null²",sub:"2025｜大阪・関西万博",
+  text:"大阪・関西万博のシグネチャーパビリオン。テーマは「いのちを磨く」。鏡の外装がうねる建物に会期中約55万人が訪れましたが、予約が取れずに入れなかった人も大勢いました。",
+  tip:"鏡のシアターの中で分身と対話する「ダイアログモード」を体験できたのは、10万人強と推定されています。",src:["null2","phile","happy"]},
+ {id:"move",cat:"line",name:"ぬるぬるのお引越",
+  text:"万博閉幕後の移設を支えたクラウドファンディング。開始23時間で1億円を突破し、15,821人が支援しました。",
+  tip:"null²ⁿは、たくさんの「もう一度会いたい」という声で生まれた施設です。",src:["dime","tetra"]},
+ {id:"film",cat:"line",name:"さようなら、ホモサピエンス",sub:"null²の公式記録映画",
+  text:"万博のnull²を記録した公式映画。閉幕後に上映されてきました。",
+  tip:"上映や配信の情報が見つかったら、事前に観ておくと壱の間に入りやすくなります。",src:["dime"]},
+ {id:"null4",cat:"line",name:"null⁴",sub:"2027｜GREEN×EXPO 2027",
+  text:"横浜の花博に現れる新作「テトラヌル」。四つの鏡面体が巨大なマニ車のように回り、花や空や人影を映して風景を変える「計算する庭」です。null²が「空の建築」なら、null⁴は「空の生命」。会期は2027年3月19日〜9月26日。",
+  tip:"null²の移設ではなく、鏡と回転と空の発想を受け継いだ新しい作品です。次はここへ。",src:["tetra","null4"]},
+ {id:"mani",cat:"line",name:"マニ車",
+  text:"回すとお経を唱えたのと同じ功徳があるとされる仏具。null⁴の鏡面体は、このマニ車のように回転し、祈りのような循環を生みます。",
+  tip:"四つの鏡面体は、それぞれ少しずつ違う回り方をするそうです。",src:["tetra"]},
+ {id:"b1",cat:"line",name:"魔法の世紀",sub:"2015｜三部作の一冊目",
+  text:"20世紀はみんなで映像を眺める「映像の世紀」、21世紀は技術が見えないまま世界に作用する「魔法の世紀」だ、と診断した本。「デジタルネイチャー」という言葉は、この本の最終章で初めて登場します。",
+  tip:"「充分に発達した科学技術は、魔法と見分けがつかない」（クラーク）が鍵の一文。",src:["magic"]},
+ {id:"b2",cat:"line",name:"デジタルネイチャー",sub:"2018｜三部作の二冊目",
+  text:"計算機自然のマニフェスト。技術が自然になったあとの世界の姿を描いた本です。副題は「生態系を為す汎神化した計算機による侘と寂」。",
+  tip:"「魔法」は技術が届いたときの見え方、「自然」は技術が定着したあとの見え方。",src:["dnb"]},
+ {id:"b3",cat:"line",name:"マタギドライヴ",sub:"2026｜三部作の三冊目",
+  text:"自動化された世界に生きながら、まだ価値の定まらない外縁へ出かけ、発見を持ち帰る。そんな生き方「マタギドライヴ」を考える文明論。null⁴を形づくる要素の一つでもあります。",
+  tip:"横浜へ出かけて、何かを見つけて持ち帰る。今回の予習そのものが、小さなマタギドライヴです。",src:["matagi"]},
+ {id:"tenson",cat:"line",name:"天孫帰るってよ？",sub:"2026｜霧島アートの森",
+  text:"2026年夏、鹿児島の霧島アートの森で開かれた落合さんの個展。作家活動の10年を総括する内容で、130点のうちプラチナプリント21点や湿板写真など、古い写真技法の作品も多く並びました。",
+  tip:"副読サイトに作品目録があり、写真作品のタイトルも読めます。",src:["cat"]},
+ {id:"inochi",cat:"line",name:"いのちの未来",sub:"2025｜石黒浩パビリオン",
+  text:"万博で石黒浩さんがプロデュースしたパビリオン。アンドロイドを通して、これからの人間と命のあり方を描きました。",
+  tip:"アンドロイドの分身と、デジタルの分身。二人で比べてみると面白いはずです。",src:[]},
+
+ {id:"gits",cat:"prep",name:"攻殻機動隊",sub:"1995｜押井守監督・約80分",
+  text:"身体のほとんどが機械の主人公が、自分の魂（ゴースト）は本物なのかを問い続けるアニメ映画。",
+  tip:"「自分を自分たらしめるものは何か」に注目して観ると、分身の体験とつながります。",src:[]},
+ {id:"bm",cat:"prep",name:"ブラック・ミラー",sub:"「ずっと側にいて」約50分",
+  text:"亡くなった恋人のSNSや声のデータから、本人そっくりのAIを作る物語（Netflixのドラマ）。",
+  tip:"データから作った分身は本人なのか。Mirrored Bodyとほぼ同じ問いです。",src:[]},
+ {id:"her",cat:"prep",name:"her",sub:"世界でひとつの彼女",
+  text:"AIと人の関係を、静かなラブストーリーとして描いた映画。",
+  tip:"SFが苦手なら、こちらから。",src:[]},
+ {id:"video",cat:"prep",name:"万博null²の映像",
+  text:"YouTubeで「null2 万博」と検索すると、鏡の外装がうねる様子が見られます。",
+  tip:"いちばん手軽な予習。「あの中に入るんだ」という実感がわきます。",src:[]},
+ {id:"ears",cat:"prep",name:"目を閉じて5分",
+  text:"イヤホンをして、目を閉じたまま5分だけ音を聴く。立体音響（バイノーラル）の動画もおすすめです。",
+  tip:"真っ暗な弐の間の予行演習です。",src:[]},
+
+ {id:"expo25",cat:"mine",name:"2025年夏の万博",
+  text:"2025年の夏、大阪・関西万博へ行きました。null²には入れず、石黒浩さんの「いのちの未来」に入りました。外から眺めたあの銀色の建物の内側を、私はまだ知りません。",
+  tip:"あのとき入れなかった扉を、今度は横浜でひらきます。",src:[]},
+ {id:"cyano",cat:"mine",name:"サイアノタイプ",sub:"デジタルネガで焼く青い写真",
+  text:"デジタルネガから青い写真を焼くサイアノタイプに取り組んできました。シルバーソルトプリントにも挑戦しています。落合さんも、プラチナプリントや湿板写真など古い写真技法を作品に使っています。",
+  tip:"データを、もう一度手ざわりのある「もの」に戻す。参の間の「質量への憧憬」と、私の中で重なる感覚です。",src:[]},
+ {id:"dark",cat:"mine",name:"暗室とフィルム",
+  text:"フィルムカメラで撮り、現像し、引き伸ばしてプリントする。私が写真の授業で教えてきた、光をものに定着させる技術です。チェキを教材にしたこともあります。",
+  tip:"参の間に並ぶカメラの中に、私の知っている機種があるか探してみたいと思っています。",src:[]},
+ {id:"aqua",cat:"mine",name:"ネイチャーアクアリウム",sub:"作品「せめぎ合う生命」",
+  text:"私がつくった水槽の作品です。水草と魚と微生物が、ガラスの中で一つの小さな自然になる。ADA主催のコンテストにも応募しました。",
+  tip:"人がつくった自然。計算機自然の考え方と、どこか似ていると感じています。",src:[]}
+];
+const E=[
+ ["n2n","gate"],["n2n","r1"],["n2n","r2"],["n2n","r3"],["n2n","r4"],["n2n","r5"],["n2n","null2"],["n2n","mirror"],["n2n","mb"],["n2n","led"],["n2n","null"],["n2n","null4"],
+ ["gate","r1"],["r1","r2"],["r2","r3"],["r3","r4"],["r4","r5"],
+ ["gate","hannya"],["gate","kigou"],["gate","membrane"],
+ ["r1","death"],["r1","mb"],["r1","dh"],["r1","alife"],["r1","awase"],["r1","led"],["r1","film"],
+ ["r2","hannya"],["r2","kocho"],["r2","ears"],
+ ["r3","tool"],["r3","butsuka"],["r3","cyano"],["r3","dark"],
+ ["r4","latent"],["r4","ai"],["r4","kocho"],["r4","led"],
+ ["r5","kigou"],["r5","awase"],
+ ["null","ku"],["ku","hannya"],["null","null2"],["ku","null4"],
+ ["dn","b1"],["dn","b2"],["dn","b3"],["dn","alife"],["dn","ai"],["dn","aqua"],["dn","null2"],
+ ["mirror","awase"],["mirror","membrane"],["mirror","dh"],
+ ["mb","dh"],["mb","scan"],["mb","ai"],["dh","gits"],["dh","bm"],["dh","inochi"],["ai","her"],["ai","latent"],
+ ["b1","b2"],["b2","b3"],["b3","conv"],["b3","null4"],["b3","death"],["b3","tenson"],
+ ["null4","hakko"],["null4","joryu"],["null4","conv"],["null4","tetra"],["null4","mani"],["null4","alife"],["hakko","joryu"],
+ ["death","bm"],["death","film"],
+ ["null2","move"],["null2","film"],["null2","video"],["null2","expo25"],["null2","membrane"],["expo25","inochi"],
+ ["tenson","butsuka"],["tenson","cyano"],["butsuka","kocho"],["cyano","dark"],["aqua","alife"],["tool","dark"]
+];
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+const nb={};N.forEach(n=>nb[n.id]=new Set());E.forEach(([a,b])=>{nb[a].add(b);nb[b].add(a)});
+const ROOMS=["gate","r1","r2","r3","r4","r5"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ───────── カウントダウン ───────── */
+(function(){
+  const target=Date.UTC(2026,11,12,15,0,0); // 2026-12-13 00:00 JST
+  const d=Math.ceil((target-Date.now())/864e5);
+  let html;
+  if(d>0) html=`<span class="label">12.13 SUN まで</span><b>あと<em>${d}</em>日</b>`;
+  else if(d>-1) html=`<span class="label">12.13 SUN</span><b><em>今日</em>、ヌルの森へ</b>`;
+  else html=`<span class="label">12.13 SUN</span><b>行ってきた</b>`;
+  $("count").innerHTML=html;
+})();
+
+/* ───────── 3Dシーン ───────── */
+const stage=$("stage");
+const DPR=Math.min(devicePixelRatio,2);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(DPR);
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x040405,1);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x040405,0.0016);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+const camera=new THREE.PerspectiveCamera(innerWidth<760?66:52,innerWidth/innerHeight,1,5000);
+const narrow=()=>innerWidth<760;
+const homePos=()=>narrow()?new THREE.Vector3(520,230,740):new THREE.Vector3(320,120,420);
+camera.position.copy(homePos());
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=.07;
+controls.minDistance=40;controls.maxDistance=1500;
+controls.maxPolarAngle=Math.PI*.6;
+controls.autoRotate=!reduceMotion;controls.autoRotateSpeed=.35;
+let tween=null;
+controls.addEventListener("start",()=>{controls.autoRotate=false;tween=null});
+
+// 鏡の床
+const FLOOR=-120;
+const rtW=()=>Math.round(innerWidth*DPR*.5),rtH=()=>Math.round(innerHeight*DPR*.5);
+const mirrorFloor=new Reflector(new THREE.CircleGeometry(1100,96),{clipBias:.003,textureWidth:rtW(),textureHeight:rtH(),color:0x34343a});
+mirrorFloor.rotateX(-Math.PI/2);mirrorFloor.position.y=FLOOR;scene.add(mirrorFloor);
+{ // 床の縁を闇に溶かす
+  const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d");
+  const g=x.createRadialGradient(256,256,70,256,256,256);g.addColorStop(0,"rgba(4,4,5,0)");g.addColorStop(.5,"rgba(4,4,5,.35)");g.addColorStop(1,"rgba(4,4,5,1)");
+  x.fillStyle=g;x.fillRect(0,0,512,512);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2300,2300),new THREE.MeshBasicMaterial({map:Object.assign(new THREE.CanvasTexture(c),{colorSpace:THREE.SRGBColorSpace}),transparent:true,depthWrite:false,toneMapped:false,fog:false}));
+  m.rotation.x=-Math.PI/2;m.position.y=FLOOR+.4;scene.add(m);
+}
+
+// 粒子の空間
+function points(n,rMin,rMax,color,size,op){
+  const g=new THREE.BufferGeometry(),p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const v=new THREE.Vector3().randomDirection().multiplyScalar(rMin+Math.random()*(rMax-rMin));v.y=Math.abs(v.y)*.9+FLOOR+20;p.set([v.x,v.y,v.z],i*3)}
+  g.setAttribute("position",new THREE.BufferAttribute(p,3));
+  return new THREE.Points(g,new THREE.PointsMaterial({color,size,sizeAttenuation:true,transparent:true,opacity:op,depthWrite:false,toneMapped:false}));
+}
+const dustFar=points(1600,700,1500,0xcfcfd6,2.2,.55);scene.add(dustFar);
+const dustNear=points(420,120,520,0xe64a2e,1.6,.7);scene.add(dustNear);
+const dustWhite=points(500,90,480,0xffffff,1.1,.5);scene.add(dustWhite);
+// 粒子は鏡に映さない（鏡のカメラはレイヤー0だけを見る）
+camera.layers.enable(1);[dustFar,dustNear,dustWhite].forEach(d=>d.layers.set(1));
+
+// 光のにじみ
+const GLOW=(()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");
+  const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.25,"rgba(255,255,255,.35)");g.addColorStop(1,"rgba(255,255,255,0)");
+  x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)})();
+function glowSprite(color,size){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.75,toneMapped:false}));s.scale.setScalar(size);return s}
+
+// 文字
+function textSprite(text,{size=6,color="#ecebe6",font="Zen Kaku Gothic New",weight=500,sub=null}={}){
+  const px=64,c=document.createElement("canvas"),x=c.getContext("2d");
+  const f=`${weight} ${px}px "${font}", "Hiragino Sans", sans-serif`,fs=`400 ${Math.round(px*.42)}px "IBM Plex Mono", monospace`;
+  x.font=f;const w=x.measureText(text).width;let sw=0;if(sub){x.font=fs;sw=x.measureText(sub).width}
+  const W=Math.ceil(Math.max(w,sw)+32),H=Math.ceil(px*1.3+(sub?px*.6:0)+8);c.width=W;c.height=H;
+  x.textAlign="center";x.textBaseline="top";
+  x.font=f;x.lineWidth=10;x.strokeStyle="rgba(4,4,5,.85)";x.lineJoin="round";x.strokeText(text,W/2,6);x.fillStyle=color;x.fillText(text,W/2,6);
+  if(sub){x.font=fs;x.fillStyle="rgba(236,235,230,.72)";x.fillText(sub,W/2,px*1.25+6)}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,toneMapped:false}));
+  const h=size*(H/px);s.scale.set(h*W/H,h,1);s.renderOrder=5;return s;
+}
+function makeLabel(n){
+  const isRoom=n.cat==="room",isCore=n.cat==="core";
+  return textSprite(n.name,{size:isCore?13:isRoom?9:5.6,font:(isRoom||isCore)?"Shippori Mincho B1":"Zen Kaku Gothic New",weight:(isRoom||isCore)?800:500,
+    sub:isRoom?`${n.en} · ${n.sub}`:isCore?"NULL²ⁿ NEXUS":null});
+}
+
+/* ───────── 配置（部屋は輪、他は力学で浮かぶ） ───────── */
+let seed=7;const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
+const SHELL={core:0,room:115,idea:215,body:190,line:245,prep:255,mine:250};
+const fixed=n=>n.cat==="core"||n.cat==="room";
+N.forEach(n=>{
+  if(n.cat==="core"){n.home=new THREE.Vector3(0,0,0);return}
+  if(n.cat==="room"){const a=-Math.PI/2+n.no/6*Math.PI*2;n.home=new THREE.Vector3(SHELL.room*Math.cos(a),26-n.no*9,SHELL.room*Math.sin(a));return}
+  n.home=new THREE.Vector3(rnd()-.5,(rnd()-.5)*.8,rnd()-.5).normalize().multiplyScalar(SHELL[n.cat]);
+});
+for(let it=0;it<420;it++){
+  const k=1-it/420;
+  for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){
+    const a=N[i],b=N[j];const d=new THREE.Vector3().subVectors(b.home,a.home);const L=d.length()||1;
+    if(L<135){d.multiplyScalar((135-L)/L*.18*k);if(!fixed(a))a.home.sub(d);if(!fixed(b))b.home.add(d)}
+  }
+  E.forEach(([s,t])=>{const a=byId[s],b=byId[t];const d=new THREE.Vector3().subVectors(b.home,a.home);const L=d.length()||1;d.multiplyScalar((L-110)/L*.04*k);
+    if(!fixed(a))a.home.add(d);if(!fixed(b))b.home.sub(d)});
+  N.forEach(n=>{if(fixed(n))return;const L=n.home.length();n.home.multiplyScalar(1+(SHELL[n.cat]-L)/L*.08);n.home.y=Math.max(FLOOR+45,Math.min(170,n.home.y))});
+}
+
+/* ───────── 中心：うねる鏡の塊 ───────── */
+let coreGeo=new THREE.IcosahedronGeometry(18,6);coreGeo.deleteAttribute("normal");coreGeo.deleteAttribute("uv");coreGeo=mergeVertices(coreGeo);coreGeo.computeVertexNormals();
+const coreBase=coreGeo.attributes.position.array.slice();
+const coreMat=new THREE.MeshStandardMaterial({color:0xffffff,metalness:1,roughness:.06,envMapIntensity:1.3,transparent:true});
+
+/* ───────── ノード ───────── */
+const sphere=new THREE.SphereGeometry(1,24,16);
+const hitGeo=new THREE.SphereGeometry(1,8,6);
+const hitMat=new THREE.MeshBasicMaterial({visible:false});
+const hits=[];
+N.forEach(n=>{
+  const col=new THREE.Color(CATS[n.cat].color);
+  const g=new THREE.Group();scene.add(g);
+  let r,mesh;
+  if(n.cat==="core"){r=18;mesh=new THREE.Mesh(coreGeo,coreMat)}
+  else{
+    r=n.cat==="room"?6.2:n.cat==="line"?5.2:4.2;
+    mesh=new THREE.Mesh(sphere,new THREE.MeshStandardMaterial({color:col,metalness:.85,roughness:.18,emissive:col,emissiveIntensity:n.cat==="room"?.55:.28,transparent:true}));
+    mesh.scale.setScalar(r);
+  }
+  g.add(mesh);
+  const glow=glowSprite(col,n.cat==="core"?150:r*(n.cat==="room"?7:5.5));g.add(glow);
+  const label=makeLabel(n);label.position.y=r+(n.cat==="core"?14:n.cat==="room"?9:6);label.userData.id=n.id;g.add(label);
+  const hit=new THREE.Mesh(hitGeo,hitMat);hit.scale.setScalar(Math.max(r*2,9));hit.userData.id=n.id;g.add(hit);
+  hits.push(hit,label);
+  Object.assign(n,{obj:g,mesh,glow,label,r,col,phase:rnd()*Math.PI*2,vis:true});
+});
+
+// 線
+const lineGeo=new THREE.BufferGeometry();
+const linePos=new Float32Array(E.length*6),lineCol=new Float32Array(E.length*6);
+lineGeo.setAttribute("position",new THREE.BufferAttribute(linePos,3));lineGeo.setAttribute("color",new THREE.BufferAttribute(lineCol,3));
+const lines=new THREE.LineSegments(lineGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+lines.frustumCulled=false;scene.add(lines);
+let focus=null;
+function edgeLevel(s,t){
+  const a=byId[s],b=byId[t];if(!a.vis||!b.vis)return 0;
+  if(!focus)return (a.cat==="room"&&b.cat==="room")?0:.24;
+  return (s===focus||t===focus)?.95:.04;
+}
+function updateLines(){
+  E.forEach(([s,t],i)=>{const a=byId[s].obj.position,b=byId[t].obj.position;linePos.set([a.x,a.y,a.z,b.x,b.y,b.z],i*6);
+    const lv=edgeLevel(s,t),ca=byId[s].col,cb=byId[t].col;
+    lineCol.set([ca.r*lv,ca.g*lv,ca.b*lv,cb.r*lv,cb.g*lv,cb.b*lv],i*6)});
+  lineGeo.attributes.position.needsUpdate=true;lineGeo.attributes.color.needsUpdate=true;
+}
+
+// 順路（門→橋）を朱の光の線で
+let route=null,routeLight=null;
+function buildRoute(){
+  route=new THREE.CatmullRomCurve3(ROOMS.map(id=>byId[id].home.clone()),false,"catmullrom",.5);
+  const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(route.getPoints(200)),
+    new THREE.LineBasicMaterial({color:0xe64a2e,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  scene.add(l);route.line=l;
+  routeLight=glowSprite(0xff8a6a,24);routeLight.material.opacity=1;scene.add(routeLight);
+}
+
+/* ───────── 表示・選択 ───────── */
+function applyFocus(){
+  N.forEach(n=>{
+    const op=!n.vis?0:!focus?1:(n.id===focus||nb[focus].has(n.id))?1:.13;
+    n.obj.visible=op>0;
+    n.mesh.material.opacity=op;n.glow.material.opacity=Math.min(1,.75*op*(n.id===focus?1.6:1));n.label.material.opacity=op;
+  });
+  if(route){const show=byId.gate.vis;route.line.visible=show;routeLight.visible=show;route.line.material.opacity=focus&&!ROOMS.includes(focus)&&focus!=="n2n"?.12:.85}
+  updateLines();
+}
+function flyTo(pos,target,dur=1100){
+  tween={t0:performance.now(),dur:reduceMotion?1:dur,fp:camera.position.clone(),tp:pos.clone(),ft:controls.target.clone(),tt:target.clone()};
+}
+function flyToNode(n){
+  const p=n.home.clone();
+  if(n.cat==="room"){flyTo(roomCam(p),p);return}
+  // 外側から中心に向かって見る（中心の塊が手前をふさがないように）
+  const dir=n.cat==="core"?camera.position.clone().sub(controls.target).normalize():p.clone().setY(p.y*.3+40).normalize();
+  const d=(n.cat==="core"?200:n.cat==="room"?125:100)*(narrow()?1.9:1);
+  flyTo(p.clone().add(dir.multiplyScalar(d)).add(new THREE.Vector3(0,8,0)),p);
+}
+// 輪の内側の高いところから、部屋を見下ろす
+function roomCam(p){const k=narrow()?.42:.32;return new THREE.Vector3(p.x*k,p.y+(narrow()?160:110),p.z*k)}
+function select(id,{fly=true,panel=true}={}){
+  $("tooltip").hidden=true;
+  focus=id;controls.autoRotate=false;applyFocus();
+  if(fly)flyToNode(byId[id]);
+  if(panel)showNode(byId[id]);
+}
+function clearFocus(){focus=null;applyFocus()}
+function home(){
+  clearFocus();closePanel();
+  flyTo(homePos(),new THREE.Vector3(0,0,0),1200);
+  setTimeout(()=>{if(!tourOn)controls.autoRotate=!reduceMotion},1300);
+}
+$("resetView").onclick=home;
+
+/* ───────── パネル ───────── */
+const ACT={};
+function openPanel(label,html){
+  $("panelLabel").innerHTML=label;$("panelBody").innerHTML=html;$("panel").hidden=false;document.body.classList.add("panel-open");
+  $("panelBody").scrollTop=0;
+  $("panelBody").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>select(b.dataset.go));
+  $("panelBody").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>ACT[b.dataset.act]());
+}
+function closePanel(){$("panel").hidden=true;document.body.classList.remove("panel-open")}
+// パネルや部屋めぐりのカードに隠れないよう、見えている側に森の中心を寄せる
+const vo={x:0,y:0};
+function viewGoal(){
+  const W=innerWidth,H=innerHeight;
+  if(tourOn)return narrow()?{x:0,y:H*.13}:{x:0,y:30};
+  if(!$("panel").hidden)return narrow()?{x:0,y:H*.24}:{x:Math.min(220,W*.18),y:0};
+  return {x:0,y:0};
+}
+$("panelClose").onclick=()=>{closePanel();clearFocus()};
+const dotOf=c=>`<span class="dot" style="--dc:${CATS[c].color}"></span>`;
+function srcHtml(n){
+  if(!n.src||!n.src.length)return n.cat==="mine"?`<p class="src">朝比奈のメモより</p>`:"";
+  return `<p class="src">出典：${n.src.map(k=>`<a href="${SRC[k][1]}" target="_blank" rel="noopener">${esc(SRC[k][0])}</a>`).join("、")}</p>`;
+}
+function showNode(n){
+  const idx=N.indexOf(n);
+  const label=n.cat==="room"?`ROOM <span class="s">${String(n.no+1).padStart(2,"0")}</span> / 06 · ${esc(n.en)}`:`${esc(CATS[n.cat].name)} <span class="s">/</span> ${String(idx).padStart(2,"0")}`;
+  const rel=[...nb[n.id]].map(i=>byId[i]);
+  let html=`<h2>${esc(n.name)}</h2>`;
+  if(n.sub)html+=`<p class="sub">${esc(n.sub)}</p>`;
+  if(n.feel)html+=`<div class="feel"><span class="label">この部屋の気持ち</span><b>${esc(n.feel)}</b></div>`;
+  html+=`<p>${esc(n.text)}</p>`;
+  html+=`<div class="tip"><span class="label">${n.cat==="prep"?"観るときのまなざし":"当日のまなざし"}</span><p>${esc(n.tip)}</p></div>`;
+  if(n.cat==="room"){const i=ROOMS.indexOf(n.id);html+=`<div class="row">${i>0?`<button class="btn small" data-go="${ROOMS[i-1]}">← ${esc(byId[ROOMS[i-1]].name)}</button>`:""}${i<5?`<button class="btn small" data-go="${ROOMS[i+1]}">${esc(byId[ROOMS[i+1]].name)} →</button>`:""}</div>`}
+  html+=`<div class="grp"><span class="label">つながることば</span><div class="chips">${rel.map(r=>`<button class="chip" data-go="${r.id}">${dotOf(r.cat)}${esc(r.name)}</button>`).join("")}</div></div>`;
+  html+=srcHtml(n);
+  openPanel(label,html);
+}
+function showAbout(){
+  openPanel(`FIELD NOTE <span class="s">00</span> / はじめに`,`
+   <h2>12月13日、ヌルの森へ。</h2>
+   <p>万博で入れなかったnull²が、横浜で常設のシアターになりました。行く前に少しだけ、この森を歩いてみてください。気になることばをたどるだけで、当日の60分がもっと面白くなるはずです。</p>
+   <p class="sig">朝比奈</p>
+   <div class="row"><button class="btn small primary" data-act="tour">六つの部屋を巡る</button><button class="btn small" data-act="quiz">ヌル診断</button></div>
+   <div class="howto"><span class="label">歩き方</span>
+     <span>ドラッグで森を回す　／　ピンチ・ホイールで近づく</span>
+     <span>光る点をタップすると、そのことばのノートがひらきます</span>
+     <span>朱い線は、門から橋までの順路です</span></div>`);
+}
+function showList(){
+  let html=`<h2>ことばの一覧</h2><p class="sub">${N.length}のことば、${E.length}本のつながり</p>`;
+  Object.entries(CATS).forEach(([k,c])=>{
+    const items=N.filter(n=>n.cat===k);
+    html+=`<div class="grp"><h3>${dotOf(k)}${esc(c.name)}</h3><div class="chips">${items.map(n=>`<button class="chip" data-go="${n.id}">${esc(n.name)}</button>`).join("")}</div></div>`;
+  });
+  clearFocus();openPanel(`INDEX <span class="s">/</span> 一覧`,html);
+}
+const TODO=[
+ ["mb","Mirrored Bodyで分身をつくる","知識・声・容姿を登録。アプリの更新も忘れずに"],
+ ["film","映画を1本観る","攻殻機動隊（1995年・約80分）がおすすめ"],
+ ["video","万博null²の映像を見る","5分でできる予習"],
+ ["ears","目を閉じて5分、音だけを聴く","弐の間の予行演習"],
+ ["shoes","ヒールとサンダルは避ける","床が鏡のエリアがあります。荷物は少なめに"],
+ ["notif","当日はスマホの通知をオフに","真っ暗な部屋があります"]
+];
+function showTodo(){
+  let saved={};try{saved=JSON.parse(localStorage.getItem("null2n-todo2")||"{}")}catch(e){}
+  const line=()=>`${TODO.filter(t=>saved[t[0]]).length} / ${TODO.length} 完了（チェックはこの端末にだけ残ります）`;
+  let html=`<h2>出かける前に、六つだけ。</h2><p class="sub" id="todoCount">${line()}</p><ul class="todo">`;
+  TODO.forEach(([k,t,s],i)=>{html+=`<li><label><span class="n">0${i+1}</span><span>${esc(t)}<small>${esc(s)}</small></span><input type="checkbox" id="todo-${k}" ${saved[k]?"checked":""}></label></li>`});
+  html+=`</ul>`;
+  clearFocus();openPanel(`BEFORE THE DAY <span class="s">/</span> 当日までに`,html);
+  TODO.forEach(([k])=>{$("todo-"+k).onchange=e=>{saved[k]=e.target.checked;try{localStorage.setItem("null2n-todo2",JSON.stringify(saved))}catch(_){} $("todoCount").textContent=line()}});
+}
+$("listBtn").onclick=showList;$("todoBtn").onclick=showTodo;
+
+/* ───────── 凡例 ───────── */
+Object.entries(CATS).filter(([k])=>k!=="core").forEach(([k,c])=>{
+  const b=document.createElement("button");b.id="cat-"+k;b.setAttribute("aria-pressed","true");b.innerHTML=`${dotOf(k)}${esc(c.name)}`;
+  b.onclick=()=>{const on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",String(on));N.filter(n=>n.cat===k).forEach(n=>n.vis=on);
+    if(focus&&!byId[focus].vis)focus=null;applyFocus()};
+  $("legend").append(b);
+});
+
+/* ───────── 部屋めぐり ───────── */
+let tourOn=false,tourI=0;
+$("tourSteps").innerHTML=ROOMS.map(()=>"<i></i>").join("");
+function tourGo(i){
+  tourI=i;const n=byId[ROOMS[i]];
+  focus=n.id;applyFocus();
+  const p=n.home.clone();
+  flyTo(roomCam(p),p,1500);
+  $("tourLabel").innerHTML=`ROOM <span class="s">0${i+1}</span> / 06`;
+  $("tourTitle").textContent=`${n.name}　${n.sub}`;$("tourEn").textContent=n.en;$("tourText").textContent=n.text;
+  [...$("tourSteps").children].forEach((el,k)=>el.classList.toggle("on",k<=i));
+  $("tourPrev").disabled=i===0;$("tourNext").textContent=i===5?"めぐり終える":"次の部屋へ";
+  $("dark").classList.toggle("on",n.id==="r2");
+  const w=$("bigword");w.classList.remove("show");void w.offsetWidth;w.textContent=n.feel;w.classList.add("show");
+}
+function startTour(){closePanel();$("quiz").hidden=true;tourOn=true;controls.autoRotate=false;document.body.classList.add("touring");$("tour").hidden=false;tourGo(0)}
+function stopTour(){tourOn=false;document.body.classList.remove("touring");$("tour").hidden=true;$("dark").classList.remove("on");$("bigword").classList.remove("show")}
+function endTour(){stopTour();home()}
+$("tourBtn").onclick=startTour;$("tourClose").onclick=endTour;
+$("tourPrev").onclick=()=>tourGo(Math.max(0,tourI-1));
+$("tourNext").onclick=()=>tourI<5?tourGo(tourI+1):endTour();
+$("tourMore").onclick=()=>{const id=ROOMS[tourI];stopTour();select(id)};
+ACT.tour=startTour;
+
+/* ───────── ヌル診断 ───────── */
+const Q=[
+ {q:"旅先で、まず惹かれるのは？",a:[["見たことのない、まぶしい景色",{r1:1,r4:2}],["静かな場所に響く、遠くの音",{r2:2}],["古い道具や、動く機械",{r3:2}]]},
+ {q:"鏡の前に立つと？",a:[["映った自分が、なんだか気になる",{r1:2}],["奥へ続く像を、つい数えてしまう",{gate:2,r5:1}],["鏡のない場所のほうが落ち着く",{r2:2}]]},
+ {q:"いちばん好きな時間は？",a:[["ぼーっと、夢みたいなことを考える",{r4:2,r2:1}],["見つけたものを、誰かに話す",{r5:2}],["手を動かして、ものをいじる",{r3:2}]]}
+];
+let qi=0,score={};
+function openQuiz(){if(tourOn)stopTour();qi=0;score={};$("quiz").hidden=false;renderQuiz()}
+function renderQuiz(){
+  if(qi<Q.length){
+    $("quizLabel").innerHTML=`NULL DIAGNOSIS <span class="s">/</span> ${qi+1} OF ${Q.length}`;
+    $("quizBody").innerHTML=`<h2>${esc(Q[qi].q)}</h2><div class="choices">${Q[qi].a.map((a,i)=>`<button class="choice" data-i="${i}">${esc(a[0])}</button>`).join("")}</div>`;
+    $("quizBody").querySelectorAll(".choice").forEach(b=>b.onclick=()=>{const w=Q[qi].a[+b.dataset.i][1];for(const k in w)score[k]=(score[k]||0)+w[k];qi++;renderQuiz()});
+    $("quizBody").querySelector(".choice").focus();
+  }else{
+    const best=ROOMS.slice().sort((a,b)=>(score[b]||0)-(score[a]||0)||ROOMS.indexOf(a)-ROOMS.indexOf(b))[0];const n=byId[best];
+    $("quizLabel").innerHTML=`NULL DIAGNOSIS <span class="s">/</span> RESULT`;
+    $("quizBody").innerHTML=`<p class="label">あなたがいちばん心を動かされそうな部屋は</p>
+      <div class="result"><b>${esc(n.name)}</b><p class="sub">${esc(n.en)} · ${esc(n.sub)}</p></div>
+      <div class="feel"><span class="label">きっと、こうなる</span><b>${esc(n.feel)}</b></div>
+      <p>${esc(n.text)}</p>
+      <div class="row"><button class="btn primary" id="quizGo">この部屋へ飛ぶ</button><button class="btn" id="quizAgain">もう一度</button></div>`;
+    $("quizGo").onclick=()=>{$("quiz").hidden=true;select(best)};
+    $("quizAgain").onclick=openQuiz;$("quizGo").focus();
+  }
+}
+ACT.quiz=openQuiz;
+$("quizBtn").onclick=openQuiz;$("quizClose").onclick=()=>{$("quiz").hidden=true};
+
+/* ───────── タップと吹き出し ───────── */
+const ray=new THREE.Raycaster();ray.camera=camera;const mouse=new THREE.Vector2();const tip=$("tooltip");
+function pick(ev){
+  const r=renderer.domElement.getBoundingClientRect();mouse.set((ev.clientX-r.left)/r.width*2-1,-(ev.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(mouse,camera);
+  const hs=ray.intersectObjects(hits.filter(h=>byId[h.userData.id].vis&&h.parent.visible),false);
+  return hs.length?byId[hs[0].object.userData.id]:null;
+}
+let downAt=null;
+renderer.domElement.addEventListener("pointerdown",e=>{downAt=[e.clientX,e.clientY]});
+renderer.domElement.addEventListener("pointerup",e=>{
+  if(!downAt)return;const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(moved>6)return;
+  const n=pick(e);if(n){if(tourOn)stopTour();select(n.id)}
+});
+renderer.domElement.addEventListener("pointerleave",()=>{tip.hidden=true});
+renderer.domElement.addEventListener("pointermove",e=>{
+  if(e.pointerType!=="mouse"||e.buttons){tip.hidden=true;return}
+  const n=pick(e);
+  if(n){tip.hidden=false;tip.textContent=n.name;tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer"}
+  else{tip.hidden=true;renderer.domElement.style.cursor=""}
+});
+
+/* ───────── 門（はじまり） ───────── */
+let started=false,bloomT0=0;
+function enterGate(name){
+  if(started)return;
+  if(!reduceMotion)scatter(name&&name.trim()?name.trim():"名前　肩書き");
+  const gate=$("gate");gate.classList.add("out");setTimeout(()=>{gate.hidden=true},1300);
+  started=true;bloomT0=performance.now();
+  setTimeout(()=>{if(!narrow()&&$("panel").hidden&&!tourOn)showAbout()},reduceMotion?50:2600);
+}
+$("gateForm").addEventListener("submit",e=>{e.preventDefault();enterGate($("gateName").value)});
+$("gateSkip").onclick=()=>enterGate("");
+// 名前の文字が粒になってほどける
+function scatter(text){
+  const cv=$("dust"),dpr=DPR;cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;const x=cv.getContext("2d");
+  const off=document.createElement("canvas");off.width=cv.width;off.height=cv.height;const o=off.getContext("2d");
+  const fsz=Math.min(innerWidth*.86/Math.max(2,[...text].length),110)*dpr;
+  o.font=`800 ${fsz}px "Shippori Mincho B1", serif`;o.textAlign="center";o.textBaseline="middle";o.fillStyle="#fff";o.fillText(text,cv.width/2,cv.height*.5);
+  const data=o.getImageData(0,0,off.width,off.height).data;const ps=[];const step=Math.max(2,Math.round(3*dpr));
+  for(let y=0;y<off.height;y+=step)for(let xx=0;xx<off.width;xx+=step){if(data[(y*off.width+xx)*4+3]>128)ps.push({x:xx,y,vx:(Math.random()-.5)*2*dpr,vy:-(Math.random()*2.4+.6)*dpr,r:Math.random()<.18})}
+  const t0=performance.now();
+  (function f(now){const t=(now-t0)/2000;x.clearRect(0,0,cv.width,cv.height);if(t>=1)return;
+    ps.forEach(p=>{const e=Math.max(0,t-.15);p.x+=p.vx*e*3;p.y+=p.vy*e*3;x.globalAlpha=Math.max(0,1-t*1.1);x.fillStyle=p.r?"#e64a2e":"#ecebe6";x.fillRect(p.x,p.y,step*.8,step*.8)});
+    requestAnimationFrame(f)})(t0);
+}
+
+/* ───────── ループ ───────── */
+const clock=new THREE.Clock();
+const ease=t=>1-Math.pow(1-t,3);
+function loop(now){
+  const t=clock.getElapsedTime();
+  let blooming=!started;
+  const el=started?(now-bloomT0)/1000:0;
+  N.forEach(n=>{
+    let k=1;
+    if(!started)k=0;
+    else if(!reduceMotion){const delay=n.cat==="core"?0:n.cat==="room"?.25+n.no*.12:.9+n.home.length()/260;k=Math.min(1,Math.max(0,(el-delay)/1.3));if(k<1)blooming=true}
+    const e=ease(k);
+    n.obj.position.copy(n.home).multiplyScalar(e);
+    if(!reduceMotion&&n.cat!=="core")n.obj.position.y+=Math.sin(t*.7+n.phase)*1.6;
+    n.obj.scale.setScalar(Math.max(.001,e));
+  });
+  if(started&&!route&&!blooming){buildRoute();applyFocus()}
+  updateLines();
+  if(!reduceMotion){ // 中心の鏡がうねる
+    const pa=coreGeo.attributes.position.array;
+    for(let i=0;i<pa.length;i+=3){const x=coreBase[i],y=coreBase[i+1],z=coreBase[i+2];
+      const d=1+.09*Math.sin(x*.18+t*1.3)*Math.sin(y*.21+t*.9)+.06*Math.sin(z*.25-t*1.1+y*.1);
+      pa[i]=x*d;pa[i+1]=y*d;pa[i+2]=z*d}
+    coreGeo.attributes.position.needsUpdate=true;coreGeo.computeVertexNormals();
+    byId.n2n.mesh.rotation.y=t*.12;
+    dustNear.rotation.y=t*.012;dustWhite.rotation.y=-t*.008;
+  }
+  if(route&&routeLight){const u=(t*.07)%1;routeLight.position.copy(route.getPointAt(u));routeLight.scale.setScalar(20+Math.sin(t*6)*4)}
+  {const g=viewGoal();vo.x+=(g.x-vo.x)*.08;vo.y+=(g.y-vo.y)*.08;
+   if(Math.abs(vo.x)+Math.abs(vo.y)<.5)camera.clearViewOffset();else camera.setViewOffset(innerWidth,innerHeight,vo.x,vo.y,innerWidth,innerHeight)}
+  if(tween){const k=Math.min(1,(now-tween.t0)/tween.dur),e=ease(k);camera.position.lerpVectors(tween.fp,tween.tp,e);controls.target.lerpVectors(tween.ft,tween.tt,e);if(k>=1)tween=null}
+  controls.update();
+  scene.fog.density=.62/Math.max(260,camera.position.distanceTo(controls.target));
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+addEventListener("resize",()=>{camera.fov=narrow()?66:52;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);mirrorFloor.getRenderTarget().setSize(rtW(),rtH())});
+addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("quiz").hidden)$("quiz").hidden=true;else if(tourOn)endTour();else{closePanel();clearFocus()}}});
+applyFocus();
+requestAnimationFrame(loop);
+// フォントが届いたら文字を描き直す
+document.fonts&&document.fonts.ready.then(()=>{
+  N.forEach(n=>{const old=n.label,s=makeLabel(n);
+    s.position.copy(old.position);s.userData.id=n.id;s.material.opacity=old.material.opacity;
+    n.obj.remove(old);old.material.map.dispose();old.material.dispose();n.obj.add(s);
+    hits[hits.indexOf(old)]=s;n.label=s});
+});
+</script>
+
+</body>
+</html>
