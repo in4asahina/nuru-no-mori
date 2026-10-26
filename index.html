@@ -1025,6 +1025,9 @@ function loop(now){
   {const g=viewGoal();vo.x+=(g.x-vo.x)*.08;vo.y+=(g.y-vo.y)*.08;
    if(Math.abs(vo.x)+Math.abs(vo.y)<.5)camera.clearViewOffset();else camera.setViewOffset(innerWidth,innerHeight,vo.x,vo.y,innerWidth,innerHeight)}
   if(tween){const k=Math.min(1,(now-tween.t0)/tween.dur),e=ease(k);camera.position.lerpVectors(tween.fp,tween.tp,e);controls.target.lerpVectors(tween.ft,tween.tt,e);if(k>=1)tween=null}
+  // カメラが鏡の床より下に潜らないように、下から見上げる角度を距離に応じて制限する（鏡は表側からしか映らない）
+  {const d=camera.position.distanceTo(controls.target)||1;const c=(FLOOR+18-controls.target.y)/d;
+   controls.maxPolarAngle=Math.min(Math.PI*.6,c<=-1?Math.PI:c>=1?0:Math.acos(c))}
   controls.update();
   scene.fog.density=.62/Math.max(260,camera.position.distanceTo(controls.target));
   renderer.render(scene,camera);
