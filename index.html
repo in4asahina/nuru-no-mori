@@ -55,6 +55,7 @@ a{color:var(--ink)}
 .topr{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
 /* 題と、あと○日は「小さなラベル＋大きな文字」を同じ寸法にして、高さをそろえる */
 .brand>.label,.count>.label{line-height:1.8}
+.brand>.label,.count>.label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .count{display:grid;gap:6px;justify-items:end;text-align:right}
 .count b{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4.2vw,44px);line-height:1.1;color:var(--ink);white-space:nowrap;text-shadow:0 0 24px rgba(0,0,0,.8)}
 .count b em{font-style:normal;color:var(--shu)}
@@ -74,7 +75,7 @@ a{color:var(--ink)}
 .hint{position:fixed;z-index:3;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));text-align:right;pointer-events:none}
 
 /* パネル */
-.panel{position:fixed;z-index:7;top:calc(130px + env(safe-area-inset-top,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));width:min(400px,calc(100% - 32px));
+.panel{position:fixed;z-index:7;top:calc(150px + env(safe-area-inset-top,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));width:min(400px,calc(100% - 32px));
   background:var(--panel);border:1px solid var(--hair);border-top:1.5px solid var(--shu);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;flex-direction:column;overflow:hidden}
 .panel header{display:flex;align-items:center;gap:8px;padding:12px 10px 4px 18px}
 .panel header .label{flex:1;min-width:0}
@@ -155,6 +156,87 @@ body.touring .dock,body.touring .legend{display:none}
 
 .tooltip{position:fixed;z-index:9;pointer-events:none;background:var(--panel-solid);border:1px solid var(--hair);padding:4px 10px;font-size:13px;transform:translate(12px,12px)}
 
+/* 三つの鏡：かけら・お知らせ・扉の先の画面 */
+.shard{border:1px solid var(--hair);padding:10px 12px;display:grid;gap:8px;background:rgba(236,235,230,.03)}
+.shard p{font-size:13.5px}
+.shard-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.shards{display:flex;gap:8px}
+.shards i{width:12px;height:12px;transform:rotate(45deg);border:1px solid var(--dim)}
+.shards i.on{background:var(--ink);border-color:var(--ink);box-shadow:0 0 10px rgba(236,235,230,.8)}
+.toast{position:fixed;z-index:11;left:50%;top:calc(100px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);
+  background:var(--panel-solid);border:1px solid var(--hair);border-left:2px solid var(--shu);padding:10px 16px;font-size:14px;pointer-events:none}
+.toast.show{animation:toast 4.2s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-8px)}10%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0}}
+.mirrors{position:fixed;inset:0;z-index:26;background:radial-gradient(70% 60% at 50% 45%,#141418,var(--void) 72%);display:grid;place-items:center;overflow:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mirrors::before{content:"";position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:3}
+.mirrors.in::before{animation:flash 1.3s ease-out}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+.m-rings{position:absolute;width:min(78vmin,560px);aspect-ratio:1;animation:spin 40s linear infinite}
+.m-rings i{position:absolute;width:62%;aspect-ratio:1;border-radius:50%;border:1px solid var(--rc);box-shadow:0 0 30px var(--rc),inset 0 0 30px var(--rc);opacity:.55}
+.m-rings i:nth-child(1){--rc:rgba(255,255,255,.6);left:19%;top:4%}
+.m-rings i:nth-child(2){--rc:rgba(63,208,240,.6);left:2%;top:34%}
+.m-rings i:nth-child(3){--rc:rgba(127,209,164,.6);left:36%;top:34%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.m-in{position:relative;z-index:2;display:grid;gap:12px;justify-items:center;text-align:center;max-width:34em}
+.mirrors h1{font-family:var(--f-display);font-weight:800;font-size:clamp(34px,7vw,60px);line-height:1.15;margin:0}
+.m-sub{margin:0;font-family:var(--f-label);font-size:12px;letter-spacing:.14em;color:var(--dim)}
+.m-wip{margin:6px 0;font-family:var(--f-display);font-weight:800;font-size:clamp(56px,14vw,120px);line-height:1;letter-spacing:.12em;color:var(--ink);
+  background:linear-gradient(100deg,#ffffff 20%,#3fd0f0 45%,#7fd1a4 60%,#ffffff 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 6s linear infinite}
+@keyframes shimmer{to{background-position:-250% 0}}
+.m-note{margin:0;color:var(--dim);font-size:14px}
+/* ことばの採集帳 */
+.collect-chip{display:inline-flex;align-items:center;gap:8px}
+.collect-chip .ticks{display:inline-flex;gap:2px}
+.collect-chip .ticks i{width:3px;height:10px;background:rgba(236,235,230,.2)}
+.collect-chip .ticks i.on{background:var(--shu)}
+.caught{display:flex;align-items:center;gap:10px;margin:0}
+.caught .new{font-family:var(--f-label);font-size:11px;letter-spacing:.14em;color:#fff;background:var(--shu);padding:1px 8px}
+.coll{position:fixed;inset:0;z-index:24;background:rgba(4,4,5,.97);overflow-y:auto;
+  padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.coll.in{animation:collIn .5s ease}
+@keyframes collIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.coll-in{max-width:980px;margin:0 auto;display:grid;gap:28px}
+.coll-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.coll h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,52px);line-height:1.15;margin:4px 0 0}
+.coll .lead{margin:6px 0 0;color:var(--dim);font-size:14px;max-width:36em}
+.coll h2{font-family:var(--f-display);font-weight:800;font-size:clamp(20px,3.4vw,26px);margin:0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.coll h2 .label{font-size:11px}
+.prog{display:grid;gap:10px;border-top:1px solid var(--ink);border-bottom:1px solid var(--hair);padding:14px 0}
+.prog-num{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.prog-num b{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,9vw,72px);line-height:1;font-variant-numeric:tabular-nums}
+.prog-num b em{font-style:normal;color:var(--shu)}
+.prog-ticks{display:flex;flex-wrap:wrap;gap:3px}
+.prog-ticks i{width:8px;height:22px;background:rgba(236,235,230,.1)}
+.prog-ticks i.on{background:var(--tc);box-shadow:0 0 8px var(--tc)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.badge{border:1px solid var(--hair);padding:14px 10px 12px;display:grid;justify-items:center;gap:8px;text-align:center;background:rgba(236,235,230,.02)}
+/* しるしは、森の中心と同じ「うねる鏡の塊」を小さく描いて回す */
+.badge .gem{width:84px;height:84px;position:relative;display:grid;place-items:center}
+.badge .gem canvas{position:absolute;inset:0;width:100%;height:100%}
+.badge .gem span{position:relative;z-index:1;font-family:var(--f-display);font-weight:800;font-size:19px;color:#3a3a40}
+.badge b{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1.3}
+.badge small{color:var(--dim);font-size:11.5px;line-height:1.5}
+.badge.got{border-color:var(--gc)}
+.badge.got .gem{filter:drop-shadow(0 0 12px var(--gc))}
+.badge.got .gem span{color:#121214;text-shadow:0 1px 0 rgba(255,255,255,.75),0 -1px 0 rgba(0,0,0,.3)}
+.badge:not(.got){opacity:.55}
+.specimens{display:grid;gap:18px}
+.spec-group{display:grid;gap:8px}
+.spec-group h3{margin:0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em}
+.spec-group h3 small{font-family:var(--f-label);color:var(--dim);font-weight:400}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.tile{border:1px solid var(--hair);background:rgba(236,235,230,.02);text-align:left;padding:10px 10px 9px;display:grid;gap:4px;min-height:74px;align-content:start}
+.tile.on{border-top:2px solid var(--tc)}
+.tile.on b{font-family:var(--f-display);font-weight:800;font-size:15px;line-height:1.35}
+.tile .no{font-family:var(--f-label);font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.tile.off{border-style:dashed;color:var(--dim)}
+.tile.off b{font-family:var(--f-display);font-size:18px;letter-spacing:.2em;color:#55534e}
+.tile.off small{font-size:11.5px}
+.tile:hover{border-color:rgba(236,235,230,.45)}
+.coll-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--hair);padding-top:14px;font-size:12.5px;color:var(--dim)}
+.linkbtn{border:0;background:transparent;color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:12.5px;padding:4px}
 .loading{position:fixed;z-index:2;left:0;right:0;top:50%;text-align:center;pointer-events:none}
 .fallback{position:fixed;inset:0;z-index:30;background:var(--void);overflow-y:auto;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(32px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -194,7 +276,9 @@ body.touring .dock,body.touring .legend{display:none}
   .count b{font-size:22px}
   .dock{bottom:calc(10px + env(safe-area-inset-bottom,0px));gap:6px}
   .dock .btn{padding:7px 12px;font-size:13px}
-  .panel{top:calc(64px + env(safe-area-inset-top,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(420px,46%)}
+  .panel{top:calc(104px + env(safe-area-inset-top,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(420px,46%)}
+  .topr{gap:4px}
+  .collect-chip{padding:4px 10px}
   .panel .body{gap:10px}
   .panel h2{font-size:24px}
   body.panel-open .dock{display:none}
@@ -226,6 +310,7 @@ body.touring .dock,body.touring .legend{display:none}
   </div>
   <div class="topr">
     <div class="count" id="count" aria-live="polite"></div>
+    <button class="btn small collect-chip" id="collectChip" aria-label="ことばの採集帳をひらく"></button>
   </div>
 </div>
 
@@ -275,6 +360,21 @@ body.touring .dock,body.touring .legend{display:none}
 </div>
 <canvas id="dust" aria-hidden="true"></canvas>
 <div class="tooltip" id="tooltip" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
+<section class="coll" id="collection" hidden aria-labelledby="collTitle">
+  <div class="coll-in" id="collBody"></div>
+</section>
+<section class="mirrors" id="mirrors" hidden aria-labelledby="mirrorsTitle">
+  <div class="m-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="m-in">
+    <span class="label">THREE MIRRORS <span class="s">/</span> 三つの鏡</span>
+    <h1 id="mirrorsTitle">三つの鏡</h1>
+    <p class="m-sub">いのちの未来 × 攻殻機動隊 × NULL²ⁿ</p>
+    <p class="m-wip">準備中</p>
+    <p class="m-note">アンドロイドの身体、義体とゴースト、デジタルの分身。三つの鏡に映る「わたし」をめぐるページを、いま準備しています。</p>
+    <button class="btn primary" id="mirrorsBack">森へ戻る</button>
+  </div>
+</section>
 
 <div class="loading label" id="loading">LOADING <span class="s">/</span> 森を読み込んでいます</div>
 <script>
@@ -563,7 +663,12 @@ function enter(name){
   if(NX.onEnter){NX.onEnter(NX.entered);return}
   const g=$("gate");g.classList.add("out");setTimeout(()=>{g.hidden=true},1300);
 }
-$("gateForm").addEventListener("submit",e=>{e.preventDefault();enter($("gateName").value)});
+// 名前はこの端末のブラウザにだけ保存し、次に開いたときに入れておく
+const NAME_KEY="null2n-name";
+try{const v=localStorage.getItem(NAME_KEY);if(v)$("gateName").value=v}catch(e){}
+function saveName(v){try{v=v.trim();if(v)localStorage.setItem(NAME_KEY,v);else localStorage.removeItem(NAME_KEY)}catch(e){}}
+$("gateName").addEventListener("input",e=>saveName(e.target.value));
+$("gateForm").addEventListener("submit",e=>{e.preventDefault();saveName($("gateName").value);enter($("gateName").value)});
 $("gateSkip").addEventListener("click",()=>enter(""));
 // 3Dが表示できないときは、ことばの一覧で読めるようにする
 NX.fail=function(){
@@ -829,18 +934,248 @@ function srcHtml(n){
   return `<p class="src">出典：${n.src.map(k=>`<a href="${SRC[k][1]}" target="_blank" rel="noopener">${esc(SRC[k][0])}</a>`).join("、")}</p>`;
 }
 function showNode(n){
+  collect(n.id);
+  const isNew=markVisited(n.id);
   const idx=N.indexOf(n);
   const label=n.cat==="room"?`ROOM <span class="s">${String(n.no+1).padStart(2,"0")}</span> / 06 · ${esc(n.en)}`:`${esc(CATS[n.cat].name)} <span class="s">/</span> ${String(idx).padStart(2,"0")}`;
   const rel=[...nb[n.id]].map(i=>byId[i]);
-  let html=`<h2>${esc(n.name)}</h2>`;
+  let html=`<p class="caught"><span class="label">採集 <span class="s">${visited.size}</span> / ${N.length}</span>${isNew?`<b class="new">NEW</b>`:""}</p><h2>${esc(n.name)}</h2>`;
   if(n.sub)html+=`<p class="sub">${esc(n.sub)}</p>`;
   if(n.feel)html+=`<div class="feel"><span class="label">この部屋の気持ち</span><b>${esc(n.feel)}</b></div>`;
   html+=`<p>${esc(n.text)}</p>`;
   html+=`<div class="tip"><span class="label">${n.cat==="prep"?"観るときのまなざし":"当日のまなざし"}</span><p>${esc(n.tip)}</p></div>`;
   if(n.cat==="room"){const i=ROOMS.indexOf(n.id);html+=`<div class="row">${i>0?`<button class="btn small" data-go="${ROOMS[i-1]}">← ${esc(byId[ROOMS[i-1]].name)}</button>`:""}${i<5?`<button class="btn small" data-go="${ROOMS[i+1]}">${esc(byId[ROOMS[i+1]].name)} →</button>`:""}</div>`}
   html+=`<div class="grp"><span class="label">つながることば</span><div class="chips">${rel.map(r=>`<button class="chip" data-go="${r.id}">${dotOf(r.cat)}${esc(r.name)}</button>`).join("")}</div></div>`;
+  if(KEYS.includes(n.id))html+=shardHtml();
   html+=srcHtml(n);
   openPanel(label,html);
+}
+/* ───────── 三つの鏡（null²ⁿ・いのちの未来・攻殻機動隊をひらくと現れる扉） ───────── */
+const KEYS=["n2n","inochi","gits"];
+let found=new Set();try{found=new Set(JSON.parse(localStorage.getItem("null2n-mirrors")||"[]").filter(k=>KEYS.includes(k)))}catch(e){}
+let portal=null;
+function saveFound(){try{localStorage.setItem("null2n-mirrors",JSON.stringify([...found]))}catch(e){}}
+function collect(id){if(!KEYS.includes(id)||found.has(id))return;found.add(id);saveFound();if(found.size===KEYS.length)setTimeout(()=>unlock(true),900)}
+function shardHtml(){
+  const done=found.size===KEYS.length;
+  return `<div class="shard"><div class="shard-head"><span class="label">MIRROR SHARDS <span class="s">/</span> 鏡のかけら</span><span class="shards">${KEYS.map(k=>`<i class="${found.has(k)?"on":""}" title="${esc(byId[k].name)}"></i>`).join("")}</span></div>
+   <p>${done?"三つの鏡がそろいました。森の上に、新しい扉が浮かんでいます。":`null²ⁿ、いのちの未来、攻殻機動隊。三つのことばをひらくと、森の上に扉が現れます（${found.size} / 3）。`}</p>
+   ${done?`<div class="row"><button class="btn small primary" data-act="mirrors">三つの鏡の扉をくぐる</button></div>`:""}</div>`;
+}
+const MIRROR_UP=new THREE.Vector3(0,95,0);
+function portalPos(){const c=new THREE.Vector3();KEYS.forEach(k=>c.add(byId[k].obj.position));return c.divideScalar(KEYS.length).add(MIRROR_UP)}
+function buildPortal(){
+  const g=new THREE.Group();scene.add(g);
+  const rings=[0xffffff,0x3fd0f0,0x7fd1a4].map((c,i)=>{const m=new THREE.Mesh(new THREE.TorusGeometry(15,.9,16,96),
+    new THREE.MeshStandardMaterial({color:c,metalness:.9,roughness:.12,emissive:c,emissiveIntensity:.35}));m.rotation.set(i*1.05,i*.7,0);g.add(m);return m});
+  const core=glowSprite(0xffffff,80);g.add(core);
+  const label=textSprite("三つの鏡",{size:9,font:"Shippori Mincho B1",weight:800,sub:"THREE MIRRORS"});fitLabel(label);label.position.y=28;g.add(label);
+  const lg=new THREE.BufferGeometry();lg.setAttribute("position",new THREE.BufferAttribute(new Float32Array(36),3));
+  const ln=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0xffd9cf,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  ln.frustumCulled=false;scene.add(ln);
+  portal={g,rings,core,label,ln,t0:performance.now()};
+}
+function updatePortal(t){
+  if(!portal)return;const p=portalPos();portal.g.position.copy(p);
+  const k=reduceMotion?1:Math.min(1,(performance.now()-portal.t0)/1600);portal.g.scale.setScalar(Math.max(.001,ease(k)));
+  if(!reduceMotion)portal.rings.forEach((r,i)=>{r.rotation.x+=.004*(i+1);r.rotation.y+=.006*(3-i)});
+  portal.core.scale.setScalar(80+Math.sin(t*2)*12);
+  const a=portal.ln.geometry.attributes.position.array,P=KEYS.map(k=>byId[k].obj.position);let o=0;
+  for(let i=0;i<3;i++){const A=P[i],B=P[(i+1)%3];a.set([A.x,A.y,A.z,B.x,B.y,B.z],o);o+=6}
+  for(let i=0;i<3;i++){const A=P[i];a.set([A.x,A.y,A.z,p.x,p.y,p.z],o);o+=6}
+  portal.ln.geometry.attributes.position.needsUpdate=true;portal.ln.material.opacity=k*.8;
+}
+function unlock(announce){
+  if(!portal)buildPortal();
+  if(announce){toast("三つの鏡がそろいました。森の上に、扉が現れます。");
+    if(!tourOn&&$("mirrors").hidden){const p=portalPos();flyTo(p.clone().add(new THREE.Vector3(0,30,230)),p,1600)}}
+}
+// お知らせは順番に一つずつ出す
+const toastQ=[];let toastBusy=false;
+function toast(msg){toastQ.push(msg);if(!toastBusy)nextToast()}
+function nextToast(){
+  const el=$("toast");const msg=toastQ.shift();
+  if(!msg){toastBusy=false;el.hidden=true;return}
+  toastBusy=true;el.textContent=msg;el.hidden=false;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");
+  setTimeout(nextToast,toastQ.length?3000:4300);
+}
+function portalHit(ev){
+  if(!portal)return false;
+  const v=portal.g.getWorldPosition(new THREE.Vector3()).project(camera);if(v.z>1)return false;
+  const x=(v.x+1)/2*innerWidth,y=(1-v.y)/2*innerHeight;return Math.hypot(x-ev.clientX,y-ev.clientY)<(ev.pointerType==="mouse"?38:52);
+}
+function openMirrors(fly=true){
+  if(!mirrorOpened){mirrorOpened=true;try{localStorage.setItem("null2n-mirror-opened","1")}catch(e){}checkBadges()}
+  closePanel();if(tourOn)stopTour();$("quiz").hidden=true;controls.autoRotate=false;
+  const go=()=>{const m=$("mirrors");m.hidden=false;m.classList.remove("in");void m.offsetWidth;m.classList.add("in");$("mirrorsBack").focus()};
+  // 扉に吸い込まれるように近づいてから、白い光とともに次の画面へ
+  if(fly&&portal&&!reduceMotion){const p=portalPos();flyTo(p.clone().add(new THREE.Vector3(0,6,42)),p,1300);setTimeout(go,1150)}else go();
+}
+function closeMirrors(){$("mirrors").hidden=true;home()}
+$("mirrorsBack").onclick=closeMirrors;
+ACT.mirrors=()=>openMirrors(true);
+
+/* ───────── ことばの採集帳（ひらいたことばを集め、鏡のしるしを手に入れる） ───────── */
+let visited=new Set();try{visited=new Set(JSON.parse(localStorage.getItem("null2n-visited")||"[]").filter(id=>byId[id]))}catch(e){}
+let mirrorOpened=false;try{mirrorOpened=localStorage.getItem("null2n-mirror-opened")==="1"}catch(e){}
+const CAT_ORDER=Object.keys(CATS);
+const ORDERED=CAT_ORDER.flatMap(k=>N.filter(n=>n.cat===k));
+// 鏡のしるし：数で進む六つは、六つの部屋の「気持ち」を順にたどる
+const BADGES=[
+ {id:"m1",kind:"count",n:1,name:"震える",glyph:"震",cond:"はじめのことばを採集する",color:"#e64a2e"},
+ {id:"m10",kind:"count",n:10,name:"戸惑う",glyph:"戸",cond:"10のことばを採集する",color:"#e64a2e"},
+ {id:"m20",kind:"count",n:20,name:"整う",glyph:"整",cond:"20のことばを採集する",color:"#e64a2e"},
+ {id:"m33",kind:"count",n:33,name:"驚く",glyph:"驚",cond:"33のことば（半分）を採集する",color:"#e64a2e"},
+ {id:"m50",kind:"count",n:50,name:"トぶ",glyph:"ト",cond:"50のことばを採集する",color:"#e64a2e"},
+ {id:"mall",kind:"count",n:N.length,name:"また来る",glyph:"来",cond:`${N.length}のことばをすべて採集する`,color:"#ffffff"},
+ {id:"c-room",kind:"cat",cat:"room",name:"順路を歩いた",glyph:"門",cond:"六つの部屋をすべて採集する"},
+ {id:"c-idea",kind:"cat",cat:"idea",name:"空を知る",glyph:"空",cond:"思想とことばをすべて採集する"},
+ {id:"c-body",kind:"cat",cat:"body",name:"分身の技師",glyph:"身",cond:"身体と技術をすべて採集する"},
+ {id:"c-line",kind:"cat",cat:"line",name:"年代記の読み手",glyph:"暦",cond:"ヌルの年代記をすべて採集する"},
+ {id:"c-inochi",kind:"cat",cat:"inochi",name:"いのちの観測者",glyph:"命",cond:"いのちの未来をすべて採集する"},
+ {id:"c-prep",kind:"cat",cat:"prep",name:"森へ入る準備",glyph:"備",cond:"森へ入る前にをすべて採集する"},
+ {id:"c-mine",kind:"cat",cat:"mine",name:"レンズをのぞいた",glyph:"鏡",cond:"朝比奈のレンズをすべて採集する"},
+ {id:"s-mirror",kind:"secret",name:"三つの鏡",glyph:"三",cond:"三つの鏡の扉をくぐる",hint:"三つのことばに、秘密がある",color:"#3fd0f0"}
+];
+BADGES.forEach(b=>{if(b.kind==="cat")b.color=CATS[b.cat].color});
+function isEarned(b){
+  if(b.kind==="count")return visited.size>=b.n;
+  if(b.kind==="cat")return N.filter(x=>x.cat===b.cat).every(x=>visited.has(x.id));
+  return mirrorOpened;
+}
+const earnedSet=new Set(BADGES.filter(isEarned).map(b=>b.id));
+function checkBadges(){
+  BADGES.forEach(b=>{if(!earnedSet.has(b.id)&&isEarned(b)){earnedSet.add(b.id);toast(`鏡のしるし「${b.name}」を手に入れました`)}});
+  updateCollectChip();refreshPedestal();
+  if(!$("collection").hidden)renderCollection();
+}
+function markVisited(id){
+  if(!byId[id]||visited.has(id))return false;
+  visited.add(id);try{localStorage.setItem("null2n-visited",JSON.stringify([...visited]))}catch(e){}
+  checkBadges();pedestalPulse=performance.now();return true;
+}
+function updateCollectChip(){
+  const c=$("collectChip");if(!c)return;
+  c.innerHTML=`<span>採集 <b>${visited.size}</b> / ${N.length}</span><span class="ticks">${BADGES.slice(0,6).map(b=>`<i class="${earnedSet.has(b.id)?"on":""}"></i>`).join("")}</span>`;
+}
+$("collectChip").onclick=()=>openCollection();
+function renderCollection(){
+  const got=BADGES.filter(b=>earnedSet.has(b.id)).length;
+  const next=BADGES.find(b=>b.kind==="count"&&!earnedSet.has(b.id));
+  let h=`<div class="coll-top"><div><span class="label">FIELD COLLECTION <span class="s">/</span> ことばの採集帳</span>
+     <h1 id="collTitle">ことばの採集帳</h1>
+     <p class="lead">森でひらいたことばは、ここに標本として残ります。全部で${N.length}。集めるほど、六つの部屋の「気持ち」をたどる鏡のしるしが手に入ります。</p></div>
+     <button class="x" id="collClose" aria-label="森へ戻る">×</button></div>
+   <div class="prog"><div class="prog-num"><b><em>${visited.size}</em> / ${N.length}</b><span class="label">採集したことば ・ 鏡のしるし ${got} / ${BADGES.length}</span></div>
+     <div class="prog-ticks" aria-hidden="true">${ORDERED.map(n=>`<i class="${visited.has(n.id)?"on":""}" style="--tc:${CATS[n.cat].color}"></i>`).join("")}</div>
+     ${next?`<p class="label">次のしるし「${esc(next.name)}」まで、あと <span class="s">${next.n-visited.size}</span> 語</p>`:`<p class="label">すべてのことばを採集しました</p>`}</div>
+   <section><h2>鏡のしるし <span class="label">MIRROR SIGNS ${got} / ${BADGES.length}</span></h2>
+     <div class="badges">${BADGES.map(b=>{const on=earnedSet.has(b.id);const sec=b.kind==="secret"&&!on;
+       return `<div class="badge ${on?"got":""}" style="--gc:${b.color}"><div class="gem"><canvas data-badge="${b.id}" width="168" height="168"></canvas><span>${on||!sec?esc(b.glyph):"？"}</span></div><b>${sec?"？？？":esc(b.name)}</b><small>${sec?esc(b.hint):esc(b.cond)}</small></div>`}).join("")}</div></section>
+   <section class="specimens"><h2>標本箱 <span class="label">SPECIMENS</span></h2>`;
+  CAT_ORDER.forEach(k=>{
+    const items=N.filter(n=>n.cat===k);const c=items.filter(n=>visited.has(n.id)).length;
+    h+=`<div class="spec-group"><h3>${dotOf(k)}${esc(CATS[k].name)} <small>${c} / ${items.length}</small></h3><div class="tiles">`;
+    items.forEach(n=>{
+      const no=String(ORDERED.indexOf(n)+1).padStart(2,"0");
+      if(visited.has(n.id))h+=`<button class="tile on" style="--tc:${CATS[k].color}" data-go="${n.id}"><span class="no">No.${no}</span><b>${esc(n.name)}</b></button>`;
+      else{const nbs=[...nb[n.id]].map(i=>byId[i]);const near=nbs.find(x=>visited.has(x.id))||nbs[0];
+        h+=`<button class="tile off" data-near="${near.id}" data-hidden="${n.id}"><span class="no">No.${no}</span><b>？？？</b><small>「${esc(near.name)}」の近く</small></button>`}
+    });
+    h+=`</div></div>`;
+  });
+  h+=`</section><div class="coll-foot"><span>採集の記録は、この端末のブラウザにだけ残ります。</span><button class="linkbtn" id="collReset">採集の記録を消す</button></div>`;
+  $("collBody").innerHTML=h;
+  badgeCanvases=[...$("collBody").querySelectorAll("canvas[data-badge]")].map(c=>({c,ctx:c.getContext("2d"),b:BADGES.find(x=>x.id===c.dataset.badge)}));
+  drawBadges(clock.getElapsedTime());
+  $("collClose").onclick=closeCollection;
+  $("collBody").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{closeCollection(false);select(b.dataset.go)});
+  $("collBody").querySelectorAll("[data-near]").forEach(b=>b.onclick=()=>{closeCollection(false);select(b.dataset.near);toast(`「${byId[b.dataset.near].name}」のまわりに、まだ見ぬことばがあります`)});
+  let armed=false;$("collReset").onclick=e=>{
+    if(!armed){armed=true;e.target.textContent="もう一度押すと、採集の記録が消えます";setTimeout(()=>{armed=false;if(e.target.isConnected)e.target.textContent="採集の記録を消す"},4000);return}
+    visited.clear();earnedSet.clear();mirrorOpened=false;
+    try{localStorage.removeItem("null2n-visited");localStorage.removeItem("null2n-mirror-opened")}catch(_){}
+    BADGES.filter(isEarned).forEach(b=>earnedSet.add(b.id));updateCollectChip();refreshPedestal();renderCollection();
+  };
+}
+function openCollection(){
+  closePanel();if(tourOn)stopTour();$("quiz").hidden=true;$("mirrors").hidden=true;controls.autoRotate=false;
+  renderCollection();const c=$("collection");c.hidden=false;c.scrollTop=0;c.classList.remove("in");void c.offsetWidth;c.classList.add("in");$("collClose").focus();
+}
+function closeCollection(goHome=true){$("collection").hidden=true;if(goHome&&!focus)controls.autoRotate=!reduceMotion}
+ACT.collection=openCollection;
+
+/* しるしの描画：森の中心と同じ鏡の塊を、小さな画面で一つずつ描いて写す */
+let badgeCanvases=[],bR=null,bScene,bCam,bMesh,bGeo,bBase,bMatOn,bMatOff;
+function initBadgeRenderer(){
+  bR=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  bR.setPixelRatio(1);bR.setSize(168,168,false);bR.setClearColor(0x000000,0);
+  bR.toneMapping=THREE.ACESFilmicToneMapping;bR.outputColorSpace=THREE.SRGBColorSpace;
+  bScene=new THREE.Scene();
+  const pm=new THREE.PMREMGenerator(bR);bScene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
+  bCam=new THREE.PerspectiveCamera(32,1,1,200);bCam.position.set(0,0,92);
+  let g=new THREE.IcosahedronGeometry(16,5);g.deleteAttribute("normal");g.deleteAttribute("uv");bGeo=mergeVertices(g);bGeo.computeVertexNormals();
+  bBase=bGeo.attributes.position.array.slice();
+  bMatOn=new THREE.MeshStandardMaterial({color:0xffffff,metalness:1,roughness:.07,envMapIntensity:1.35});
+  bMatOff=new THREE.MeshStandardMaterial({color:0x2a2a30,metalness:.85,roughness:.38,envMapIntensity:.5});
+  bMesh=new THREE.Mesh(bGeo,bMatOn);bScene.add(bMesh);
+}
+function drawBadges(t){
+  if(!badgeCanvases.length)return;
+  if(!bR)initBadgeRenderer();
+  const pa=bGeo.attributes.position.array;
+  badgeCanvases.forEach(({c,ctx,b},i)=>{
+    if(!c.isConnected)return;
+    const on=earnedSet.has(b.id),ph=i*1.7,tt=reduceMotion?0:t;
+    // うねり（手に入れたしるしほど大きくゆらぐ）
+    const amp=on?1:.45;
+    for(let k=0;k<pa.length;k+=3){const x=bBase[k],y=bBase[k+1],z=bBase[k+2];
+      const d=1+amp*(.1*Math.sin(x*.22+tt*1.3+ph)*Math.sin(y*.25+tt*.9)+.07*Math.sin(z*.3-tt*1.1+y*.12+ph));
+      pa[k]=x*d;pa[k+1]=y*d;pa[k+2]=z*d}
+    bGeo.attributes.position.needsUpdate=true;bGeo.computeVertexNormals();
+    bMesh.material=on?bMatOn:bMatOff;
+    if(on)bMatOn.color.set(b.color).lerp(new THREE.Color(0xffffff),.72);
+    // 回転（しるしごとに少しずつ速さと傾きを変える）
+    bMesh.rotation.set(.35+Math.sin(tt*.5+ph)*.15,tt*(on?.9:.35)+ph,0);
+    bR.render(bScene,bCam);
+    ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(bR.domElement,0,0,c.width,c.height);
+  });
+}
+
+/* 森の足もと：66の刻みが並ぶ「採集の台座」。集めたことばの刻みが、その分類の色で光る */
+let pedestal=null,pedestalPulse=0;
+const PED_R=92;
+function buildPedestal(){
+  const y=FLOOR+1.2;
+  const base=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({length:180},(_,i)=>{const a=i/180*Math.PI*2;return new THREE.Vector3(Math.cos(a)*(PED_R+12),y,Math.sin(a)*(PED_R+12))})),
+    new THREE.LineBasicMaterial({color:0x8a8a90,transparent:true,opacity:.55,depthWrite:false,toneMapped:false}));
+  const pos=new Float32Array(ORDERED.length*6),col=new Float32Array(ORDERED.length*6);
+  ORDERED.forEach((n,i)=>{const a=-Math.PI/2+i/ORDERED.length*Math.PI*2,c=Math.cos(a),s=Math.sin(a);pos.set([c*(PED_R-8),y,s*(PED_R-8),c*(PED_R+8),y,s*(PED_R+8)],i*6)});
+  const tg=new THREE.BufferGeometry();tg.setAttribute("position",new THREE.BufferAttribute(pos,3));tg.setAttribute("color",new THREE.BufferAttribute(col,3));
+  const ticks=new THREE.LineSegments(tg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  const glow=glowSprite(0xe64a2e,120);glow.position.set(0,y+4,0);glow.material.opacity=.25;
+  const g=new THREE.Group();g.add(base,ticks,glow);scene.add(g);
+  pedestal={g,ticks,glow,label:null};refreshPedestal();
+}
+function refreshPedestal(){
+  if(!pedestal)return;
+  const col=pedestal.ticks.geometry.attributes.color.array;
+  ORDERED.forEach((n,i)=>{const on=visited.has(n.id),c=n.col,k=on?1:.12;col.set([c.r*k,c.g*k,c.b*k,c.r*k,c.g*k,c.b*k],i*6)});
+  pedestal.ticks.geometry.attributes.color.needsUpdate=true;
+  if(pedestal.label){pedestal.g.remove(pedestal.label);pedestal.label.material.map.dispose();pedestal.label.material.dispose()}
+  const l=textSprite("ことばの採集帳",{size:9,font:"Shippori Mincho B1",weight:800,sub:`FIELD COLLECTION · ${visited.size} / ${N.length}`});fitLabel(l);
+  l.position.set(0,FLOOR+26,0);pedestal.g.add(l);pedestal.label=l;
+}
+function updatePedestal(t){
+  if(!pedestal)return;
+  pedestal.ticks.rotation.y=reduceMotion?0:t*.03;
+  const k=Math.max(0,1-(performance.now()-pedestalPulse)/900);
+  pedestal.glow.material.opacity=.22+k*.5+Math.sin(t*1.6)*.04;pedestal.glow.scale.setScalar(120+k*80);
+}
+function collectHit(ev){
+  if(!pedestal||!pedestal.label)return false;
+  const v=pedestal.label.getWorldPosition(new THREE.Vector3()).project(camera);if(v.z>1)return false;
+  const x=(v.x+1)/2*innerWidth,y=(1-v.y)/2*innerHeight;return Math.hypot(x-ev.clientX,y-ev.clientY)<(ev.pointerType==="mouse"?44:56);
 }
 /* 毎日かわる「はじめに」のメッセージ（キーは12月13日までの残り日数） */
 const DAILY={
@@ -915,8 +1250,7 @@ function showAbout(){
    <div class="howto"><span class="label">歩き方</span>
      <span>ドラッグで森を回す　／　ピンチ・ホイールで近づく</span>
      <span>光る点をタップすると、そのことばのノートがひらきます</span>
-     <span>朱い線は、門から橋までの順路です</span>
-     <span>このノートは、12月13日まで毎日かわります</span></div>`);
+     <span>朱い線は、門から橋までの順路です</span></div>`);
 }
 function showList(){
   let html=`<h2>ことばの一覧</h2><p class="sub">${N.length}のことば、${E.length}本のつながり</p>`;
@@ -957,7 +1291,7 @@ Object.entries(CATS).filter(([k])=>k!=="core").forEach(([k,c])=>{
 let tourOn=false,tourI=0;
 $("tourSteps").innerHTML=ROOMS.map(()=>"<i></i>").join("");
 function tourGo(i){
-  tourI=i;const n=byId[ROOMS[i]];
+  tourI=i;const n=byId[ROOMS[i]];markVisited(n.id);
   focus=n.id;applyFocus();
   const p=n.home.clone();
   flyTo(roomCam(p),p,1500);
@@ -1026,11 +1360,15 @@ let downAt=null;
 renderer.domElement.addEventListener("pointerdown",e=>{downAt=[e.clientX,e.clientY]});
 renderer.domElement.addEventListener("pointerup",e=>{
   if(!downAt)return;const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(moved>6)return;
+  if(portalHit(e)){openMirrors(true);return}
+  if(collectHit(e)){openCollection();return}
   const n=e.pointerType==="mouse"?pick(e):(pickNear(e)||pick(e));if(n){if(tourOn)stopTour();select(n.id)}
 });
 renderer.domElement.addEventListener("pointerleave",()=>{tip.hidden=true});
 renderer.domElement.addEventListener("pointermove",e=>{
   if(e.pointerType!=="mouse"||e.buttons){tip.hidden=true;return}
+  if(collectHit(e)){tip.hidden=false;tip.textContent="ことばの採集帳";tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer";return}
+  if(portalHit(e)){tip.hidden=false;tip.textContent="三つの鏡";tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer";return}
   const n=pick(e);
   if(n){tip.hidden=false;tip.textContent=n.name;tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer"}
   else{tip.hidden=true;renderer.domElement.style.cursor=""}
@@ -1045,7 +1383,7 @@ function enterGate(name){
   const gate=$("gate");gate.classList.add("out");setTimeout(()=>{gate.hidden=true},1300);
   started=true;bloomT0=performance.now();
   // スマホでは森が広がりきるのを少し待ってから出す
-  setTimeout(()=>{if($("panel").hidden&&!tourOn&&$("quiz").hidden)showAbout()},reduceMotion?50:(narrow()||short()?3400:2600));
+  setTimeout(()=>{if($("panel").hidden&&!tourOn&&$("quiz").hidden&&$("mirrors").hidden)showAbout()},reduceMotion?50:(narrow()||short()?3400:2600));
 }
 window.NX.onEnter=enterGate;
 // 名前の文字が粒になってほどける
@@ -1089,6 +1427,8 @@ function loop(now){
     byId.n2n.mesh.rotation.y=t*.12;
     dustNear.rotation.y=t*.012;dustWhite.rotation.y=-t*.008;
   }
+  updatePortal(t);updatePedestal(t);
+  if(!$("collection").hidden&&!reduceMotion)drawBadges(t);
   if(route&&routeLight){const u=(t*.07)%1;routeLight.position.copy(route.getPointAt(u));routeLight.scale.setScalar(20+Math.sin(t*6)*4)}
   {const g=viewGoal();vo.x+=(g.x-vo.x)*.08;vo.y+=(g.y-vo.y)*.08;
    if(Math.abs(vo.x)+Math.abs(vo.y)<.5)camera.clearViewOffset();else camera.setViewOffset(innerWidth,innerHeight,vo.x,vo.y,innerWidth,innerHeight)}
@@ -1105,12 +1445,16 @@ addEventListener("resize",()=>{camera.fov=narrow()?66:52;camera.aspect=innerWidt
   N.forEach(n=>fitLabel(n.label));
   // 向きを変えたら、何も選んでいなければ全体が入る位置へ戻る
   if(started&&!focus&&!tourOn){clearTimeout(window.__rz);window.__rz=setTimeout(()=>flyTo(homePos(),new THREE.Vector3(0,0,0),700),250)}});
-addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("quiz").hidden)$("quiz").hidden=true;else if(tourOn)endTour();else{closePanel();clearFocus()}}});
+addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("collection").hidden)closeCollection();else if(!$("mirrors").hidden)closeMirrors();else if(!$("quiz").hidden)$("quiz").hidden=true;else if(tourOn)endTour();else{closePanel();clearFocus()}}});
 applyFocus();
 requestAnimationFrame(loop);
 // 準備ができた合図。門を先にくぐっていたら、ここで森をひらく
 window.NX.ready=true;$("loading").hidden=true;
-if(window.NX.entered!==null)enterGate(window.NX.entered);
+if(found.size===KEYS.length)unlock(false);
+buildPedestal();updateCollectChip();
+if(location.hash==="#collection"){enterGate("");openCollection()}
+if(location.hash==="#mirrors"){enterGate("");unlock(false);openMirrors(false)}
+else if(window.NX.entered!==null)enterGate(window.NX.entered);
 // フォントが届いたら文字を描き直す
 document.fonts&&document.fonts.ready.then(()=>{
   N.forEach(n=>{const old=n.label,s=makeLabel(n);
