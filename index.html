@@ -324,6 +324,26 @@ body.touring .dock,body.touring .legend{display:none}
 .badge.got .gem span{color:#121214;text-shadow:0 1px 0 rgba(255,255,255,.75),0 -1px 0 rgba(0,0,0,.3)}
 .badge:not(.got){opacity:.55}
 .specimens{display:grid;gap:18px}
+/* 日めくりの足あと（採集帳の中のカレンダー） */
+.walk{display:grid;gap:12px}
+.walk-stat{margin:0;font-size:14px;color:var(--dim)}
+.walk-stat b{color:var(--ink);font-family:var(--f-display);font-weight:800;font-size:20px;margin:0 2px}
+.walk-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;max-width:440px}
+.walk-cal .wd{font-family:var(--f-label);font-size:10px;color:var(--dim);text-align:center;letter-spacing:.06em}
+.walk-cal button{aspect-ratio:1;border:1px solid var(--hair);background:transparent;display:grid;place-items:center;align-content:center;gap:0;font:inherit;font-size:11px;line-height:1.15;color:#6f6e72;padding:0;cursor:pointer}
+.walk-cal button small{font-size:8.5px;font-family:var(--f-label);letter-spacing:.04em}
+.walk-cal button.on{background:rgba(233,201,143,.16);border-color:#e9c98f;color:var(--ink);box-shadow:inset 0 0 12px -4px #e9c98f}
+.walk-cal button.today{border-color:var(--shu);color:var(--ink);box-shadow:0 0 0 1px var(--shu)}
+.walk-cal button.on.today{box-shadow:0 0 0 1px var(--shu),inset 0 0 12px -4px #e9c98f}
+.walk-cal button.fut{opacity:.35;cursor:default}
+.walk-cal button.last{border-style:dashed}
+.walk-note{margin:0;font-size:12.5px;color:var(--dim)}
+.badge.fresh{animation:fresh 1.6s ease-in-out 3}
+@keyframes fresh{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 2px var(--gc),0 0 40px -6px var(--gc)}}
+.fullflash{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;background:radial-gradient(circle at 50% 55%,rgba(255,248,228,.9),rgba(255,248,228,.25) 45%,rgba(255,248,228,0) 75%)}
+.fullflash.go{animation:fullfl 3s ease-out}
+@keyframes fullfl{0%{opacity:0}16%{opacity:.85}100%{opacity:0}}
+.count{cursor:pointer}
 .spec-group{display:grid;gap:8px}
 .spec-group h3{margin:0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em}
 .spec-group h3 small{font-family:var(--f-label);color:var(--dim);font-weight:400}
@@ -462,6 +482,7 @@ body.touring .dock,body.touring .legend{display:none}
 <canvas id="dust" aria-hidden="true"></canvas>
 <div class="tooltip" id="tooltip" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="fullflash" id="fullFlash" aria-hidden="true"></div>
 <section class="coll" id="collection" hidden aria-labelledby="collTitle">
   <div class="coll-in" id="collBody"></div>
 </section>
@@ -492,12 +513,12 @@ body.touring .dock,body.touring .legend{display:none}
       </div>
       <div class="m-trio" role="group" aria-label="図に立てる鏡を選ぶ">
         <button type="button" class="m-card m-tog" data-w="0" aria-pressed="false" style="--c:#3fd0f0;--d:0.0s"><span class="label">見てきた鏡</span><b>いのちの未来</b><span class="p">石黒浩氏のパビリオン。アンドロイドという、重さのある身体を持つ分身と暮らす50年後を、祖母と孫娘の物語で体験しました。私たちはすでに「物質の分身」を見ています。</span></button>
-        <button type="button" class="m-card m-tog" data-w="1" aria-pressed="false" style="--c:#ffffff;--d:0.35s"><span class="label">これから入る鏡</span><b>null²ⁿ</b><span class="p">落合陽一氏の常設シアター。知識・声・容姿から生まれる「データの分身」が、鏡とLEDの部屋に現れます。重さのない分身に、今度は自分が出会います。</span></button>
+        <button type="button" class="m-card m-tog" data-w="1" aria-pressed="false" style="--c:#ffffff;--d:0.35s"><span class="label">これから入る鏡</span><b>null²ⁿ</b><span class="p">落合陽一氏の常設シアター。テーマは「鏡の再発明」。知識・声・容姿からデータの分身がつくれる時代に、鏡はどう生まれ変わるのか。今度は自分が、その鏡の前に立ちます。</span></button>
         <button type="button" class="m-card m-tog" data-w="2" aria-pressed="false" style="--c:#7fd1a4;--d:0.7s"><span class="label">物語の鏡</span><b>攻殻機動隊</b><span class="p">機械の身体（義体）に、その人らしさ（ゴースト）が宿る世界。30年前に描かれた、物質と情報のあいだで揺れる身体の物語です。三枚目の鏡として立てると、二つの分身を映し合うだけだった鏡が、わたしを無数に広げはじめます。</span></button>
       </div>
       <div class="m-notes">
         <p style="--c:#3fd0f0"><b>いのちの未来</b>石黒浩氏のパビリオン。アンドロイドという、重さのある身体を持つ分身と暮らす50年後を、祖母と孫娘の物語で体験しました。私たちはすでに「物質の分身」を見ています。</p>
-        <p style="--c:#ffffff"><b>null²ⁿ</b>落合陽一氏の常設シアター。知識・声・容姿から生まれる「データの分身」が、鏡とLEDの部屋に現れます。重さのない分身に、今度は自分が出会います。</p>
+        <p style="--c:#ffffff"><b>null²ⁿ</b>落合陽一氏の常設シアター。テーマは「鏡の再発明」。知識・声・容姿からデータの分身がつくれる時代に、鏡はどう生まれ変わるのか。今度は自分が、その鏡の前に立ちます。</p>
         <p style="--c:#7fd1a4"><b>攻殻機動隊</b>機械の身体（義体）に、その人らしさ（ゴースト）が宿る世界。30年前に描かれた、物質と情報のあいだで揺れる身体の物語です。三枚目の鏡として立てると、二つの分身を映し合うだけだった鏡が、わたしを無数に広げはじめます。</p>
       </div>
     </section>
@@ -522,8 +543,8 @@ body.touring .dock,body.touring .legend{display:none}
         <p class="m-scene">9課のラボに届いた謎の義体について、草薙素子とバトーが調査に出発する場面。その義体は、脳を持たないのに、ゴーストのようなものを宿しているらしい。素子はその義体に自分を重ね、自分自身の存在を疑いはじめます。本当の自分はもう失われていて、機械の身体と電子の脳が、自分らしさをまねているだけではないか。さらには、はじめから自分などいなかったのではないか、とまで口にします。</p>
         <div class="m-rel">
           <p>素子が疑ったのは、自分がすでに「写し」の側にいるのではないか、ということでした。電脳と義体があれば、顔も声も記憶も、自分らしさはまねできてしまう。null²ⁿのMirrored Bodyも、容姿・声・知識を登録すると、自分そっくりに話し、動く分身をつくります。30年前の攻殻機動隊が投げかけた疑いを、いまはアプリで誰もが試せるようになっています。</p>
-          <p>万博いのちの未来のゾーン2では、余命の近い祖母が、自分をアンドロイドという物質の身体に移すかどうかで迷いました。移ったあとの自分は、本当に自分なのか。素子は同じ問いを、自分がもう移された側かもしれない、という場所から見ています。壱の間で私たちが出会うのは、データの身体に写された自分です。今度は私たちが本物の側に立って、目の前の分身に同じ疑いを向けることになります。けれど分身から見れば、疑われているのはこちらかもしれない。「戸惑う」という部屋の気持ちは、その向きの入れかわりから来るのかもしれません。</p></div>
-        <p class="m-q">画面の中の分身に、足りないものは何で、多すぎるものは何だろう。</p>
+          <p>万博いのちの未来のゾーン2では、余命の近い祖母が、自分をアンドロイドという物質の身体に移すかどうかで迷いました。移ったあとの自分は、本当に自分なのか。素子は同じ問いを、自分がもう移された側かもしれない、という場所から見ています。「さよならホモ・サピエンス」と名づけられた壱の間で、私たちはどんな自分に出会うのでしょう。もしデータの身体に写された自分に出会ったら、今度は私たちが本物の側に立って、その分身に同じ疑いを向けることになります。けれど分身から見れば、疑われているのはこちらかもしれない。「戸惑う」という部屋の気持ちは、その向きの入れかわりから来るのかもしれません。</p></div>
+        <p class="m-q">自分の分身に、足りないものは何で、多すぎるものは何だろう。</p>
       </article>
 
       <article class="m-ch">
@@ -532,8 +553,8 @@ body.touring .dock,body.touring .legend{display:none}
         <p class="m-scene">光の届かない夜の海に、素子が一人で潜っていく場面。浮かび上がる途中、どこからともなく聞こえてくる声が、この一節を語ります。のちに人形使いだとわかる声です。</p>
         <div class="m-rel">
           <p>鏡で見ても、見えるものはぼんやりしている。攻殻機動隊のこの一節は、目にたよる限り、自分の本当の姿ははっきりしない、と言っているようにも読めます。</p>
-          <p>万博いのちの未来の最後のゾーン「まほろば」は、音と光に満ちた部屋でした。私たちはそこで、身体の制約から解き放たれた人の姿を「見て」きました。null²ⁿの弐の間は、その逆です。「無眼界」は般若心経で「見るという働きもない」ことを言う言葉で、部屋は完全な暗闇になり、音だけが残ります。光の中で解放を見た私たちが、今度は光を手放して、自分の輪郭を確かめる。鏡の前でぼんやりしていたものが、見ないことで「整う」のかもしれません。</p></div>
-        <p class="m-q">何も見えない部屋で、自分の身体はどこまでだと感じるだろう。</p>
+          <p>万博いのちの未来の最後のゾーン「まほろば」は、音と光に満ちた部屋でした。私たちはそこで、身体の制約から解き放たれた人の姿を「見て」きました。null²ⁿの弐の間の名前は、その逆を向いています。「無眼界」は般若心経で「見るという働きもない」ことを言う言葉です。光の中で解放を見た私たちが、今度は「見ない」ことを名前に持つ部屋に入る。鏡の前でぼんやりしていたものが、見ることを手放したときに「整う」のかもしれません。</p></div>
+        <p class="m-q">見ることを手放したとき、自分の身体はどこまでだと感じるだろう。</p>
       </article>
 
       <article class="m-ch">
@@ -542,8 +563,8 @@ body.touring .dock,body.touring .legend{display:none}
         <p class="m-scene">記憶を書き換えられていた清掃局の男が、妻と娘の記憶も、大切にしていた家族の写真も、作られたものだったと知らされます。その取り調べのあとに、バトーが口にすることばです。</p>
         <div class="m-rel">
           <p>攻殻機動隊の清掃局の男にとって、家族の写真は記憶をつなぎとめる「重さのある証拠」のはずでした。それが作り物だったと知る場面は、写真や映像を記録として残してきた私には、とても痛い場面です。</p>
-          <p>一方、万博いのちの未来のゾーン1で見た人形や仏像は、人が記憶や祈りを重さのあるモノに託してきた証しでした。null²ⁿの参の間には、古今東西の発明品や機材が並び、ときどき音を立てたり動き出したりします。情報ならいくらでも書き換えられる時代だからこそ、手ざわりのあるモノに惹かれる。それが「質量への憧憬」なのだと思います。そして道具が突然動き出したとき、私たちはそれが現実なのか幻なのか、一瞬わからなくなるはずです。</p></div>
-        <p class="m-q">懐かしい道具を見たときに湧く記憶は、本当に私のものだろうか。</p>
+          <p>一方、万博いのちの未来のゾーン1で見た人形や仏像は、人が記憶や祈りを重さのあるモノに託してきた証しでした。null²ⁿの参の間の名前は「質量への憧憬」。情報ならいくらでも書き換えられる時代だからこそ、手ざわりのあるモノに惹かれる。それが「質量への憧憬」なのだと思います。けれど、その手ざわりさえ現実なのか幻なのか、わからなくなる瞬間があるのかもしれません。</p></div>
+        <p class="m-q">懐かしいものに出会ったときに湧く記憶は、本当に私のものだろうか。</p>
       </article>
 
       <article class="m-ch">
@@ -552,7 +573,7 @@ body.touring .dock,body.touring .legend{display:none}
         <p class="m-scene">捕らえられた人形使いが、自分は生命体だと名乗り、亡命を求める場面です。人間のDNAもまた、自分を残すためのプログラムにすぎないのではないか、と問い返します。</p>
         <div class="m-rel">
           <p>攻殻機動隊の人形使いは、情報の側から生まれた生命でした。万博いのちの未来の「まほろば」が描いたのは、身体の制約から解き放たれ、自由に身体を選んで生きる1000年後の人間でした。向きは逆ですが、どちらも生命と情報の境目をなくしています。</p>
-          <p>null²ⁿの肆の間は、AIが世界をとらえる「潜在空間」の映像に包まれる部屋です。境目がなくなったあとの世界を、その内側から見せてくれる部屋なのかもしれません。「トぶ」という気持ちは、身体の輪郭から一度外へ出ることだと読みました。</p></div>
+          <p>null²ⁿの肆の間は「潜在空間の夢」。AIが世界をとらえる見えない空間を、名前に持つ部屋です。境目がなくなったあとの世界を、その内側から見せてくれる部屋なのかもしれません。「トぶ」という気持ちは、身体の輪郭から一度外へ出ることだと読みました。</p></div>
         <p class="m-q">AIの目に映る世界の中で、私はどんな形をしているだろう。</p>
       </article>
 
@@ -561,9 +582,9 @@ body.touring .dock,body.touring .legend{display:none}
         <blockquote class="m-title verbatim"><p>然れど、かの時には<br>顔を対せて相見ん。</p><cite>コリント前書 13章12節（文語訳聖書）</cite></blockquote>
         <p class="m-scene">人形使いと一つになる直前、弐の間で聞いた一節の続きが語られます。ラストでは、子どもの身体に入った素子が、ネットは広い、どこへ行こうか、と言い残して出ていきます（要旨）。</p>
         <div class="m-rel">
-          <p>鏡越しにぼんやり見ていたものと、最後には向かい合う。null²ⁿの橋では、鏡越しに、通ってきた部屋を振り返ります。そのとき私たちは、万博いのちの未来で見た物質の分身と、null²ⁿで出会ったデータの分身を、ようやく並べて見られるのだと思います。</p>
+          <p>鏡越しにぼんやり見ていたものと、最後には向かい合う。null²ⁿの最後の部屋「記号の彼岸」で、私たちは通ってきた六つの部屋を振り返ることになるでしょう。そのとき私たちは、万博いのちの未来で見た物質の分身と、null²ⁿで出会った「鏡の再発明」を、ようやく並べて見られるのだと思います。</p>
           <p>そして攻殻機動隊の素子が新しい身体で出ていったように、null²はnull²ⁿに、万博いのちの未来は「いのちの未来＋」に、それぞれ姿を変えて万博のあとも続いています。「また来る」は、終わりではなく出発のことばです。</p></div>
-        <p class="m-q">鏡越しに振り返ったとき、いちばん印象に残っている部屋はどこだろう。</p>
+        <p class="m-q">最後に振り返ったとき、いちばん印象に残っている部屋はどこだろう。</p>
       </article>
     </section>
 
@@ -586,9 +607,9 @@ body.touring .dock,body.touring .legend{display:none}
       <span class="label"><span class="s">04</span> / QUESTIONS　当日に持っていく問い</span>
       <h2>三つだけ、<br>ポケットに入れていく。</h2>
       <ol class="m-ql">
-        <li><b>分身に会ったとき</b>万博いのちの未来のアンドロイドと、null²ⁿのデータの分身。どちらの方が「自分」に近いと感じたか。</li>
-        <li><b>暗闇の中で</b>見えない弐の間で、自分の身体の輪郭はどこにあったか。</li>
-        <li><b>鏡越しに振り返って</b>三つの鏡のうち、いま一番くっきり見えているのはどれか。</li>
+        <li><b>分身を思うとき</b>万博いのちの未来のアンドロイドと、Mirrored Bodyのデータの分身。どちらの方が「自分」に近いと感じたか。</li>
+        <li><b>見ることを手放して</b>「無眼界の夢」で、自分の身体の輪郭はどこにあったか。</li>
+        <li><b>最後に振り返って</b>三つの鏡のうち、いま一番くっきり見えているのはどれか。</li>
       </ol>
       <div class="m-chips">
         <button class="chip" data-mgo="inochi"><span class="dot" style="--dc:#3fd0f0"></span>万博いのちの未来</button>
@@ -650,26 +671,26 @@ const CATS={
 };
 const N=[
  {id:"n2n",cat:"core",name:"null²ⁿ",sub:"ヌルヌルネクサス｜横浜ランドマークプラザ 5F",
-  text:"大阪・関西万博のシグネチャーパビリオン「null²」が、横浜で常設のミュージアムシアターとして生まれ変わったもの。六つの部屋と二つの大型LEDシアターを、約60分かけて巡ります。テーマは「鏡の再発明」。",
+  text:"大阪・関西万博のシグネチャーパビリオン「null²」が、横浜で常設のミュージアムシアターとして生まれ変わったもの。六つの部屋を、約60分かけて巡ります。テーマは「鏡の再発明」。",
   tip:"完全日時指定・事前予約制。入口で靴にシューズカバーを付け、荷物は前に抱えて歩きます。撮影はOK（フラッシュ不可）。",src:["nexus","tab"]},
 
  {id:"gate",cat:"room",no:0,name:"門",en:"GATE",sub:"皆空鏡門",feel:"震える",
-  text:"鏡の門をくぐり、名前や肩書きをここに置いていく導入の部屋。万博のnull²の外装と同じ鏡の膜に包まれ、低い音が身体に響きます。",
-  tip:"万博で外から眺めた、あの銀色の建物の「内側」に入る瞬間です。Mirrored Bodyとの連携も、ここから始まります。",src:["nexus","happy"]},
+  text:"旅の始まりの部屋。「皆空鏡門」の「皆空」は、般若心経の「すべては空である」から来ています。名前や肩書きといった、ふだんまとっているものから少し離れるところから、体験が始まります。",
+  tip:"万博で外から眺めた、あの銀色の「内側」へ。何が待っているかは、当日のお楽しみです。",src:["nexus","happy"]},
  {id:"r1",cat:"room",no:1,name:"壱の間",en:"FIRST ROOM",sub:"さよならホモ・サピエンス",feel:"戸惑う",
-  text:"意味がつかめないまま、何かを手放していく儀式のような部屋。鏡とLEDに囲まれたシアターで、デジタルヒューマンになった自分や人工生命が現れます。万博のミラーシアターから、LEDの面が5面に増えました。",
-  tip:"アプリで分身を作っておくと、自分の分身が演出に登場することがあります。",src:["nexus","happy"]},
+  text:"人間（ホモ・サピエンス）に別れを告げる、という大胆な名前の部屋。部屋の気持ちは「戸惑う」。意味をすぐにつかもうとせず、戸惑いごと受け取ってみると、この部屋の楽しみ方が広がります。",
+  tip:"Mirrored Bodyで分身をつくっておくと、体験がもう少し自分ごとになるかもしれません。",src:["nexus","happy"]},
  {id:"r2",cat:"room",no:2,name:"弐の間",en:"SECOND ROOM",sub:"無眼界の夢",feel:"整う",
-  text:"完全な暗闇の中で、座って音だけを受け取る部屋。映像はまったくありません。声や気配が、身体のまわりのいろいろな場所から聞こえてきます。",
-  tip:"スマホの画面の明かりも控えるよう案内されます。通知は事前にオフに。",src:["nexus","happy"]},
+  text:"「無眼界」は、般若心経で「見るという働きもない」ことを表す言葉。目にたよらないとき、ほかの感覚はどうひらいていくのか。部屋の気持ちは「整う」。",
+  tip:"館内では、スマホの画面の明かりを控えるよう案内される場面があります。通知は事前にオフに。",src:["nexus","happy"]},
  {id:"r3",cat:"room",no:3,name:"参の間",en:"THIRD ROOM",sub:"質量への憧憬",feel:"驚く",
-  text:"古今東西の発明品や機材が並ぶギャラリーを、歩き回って鑑賞する部屋。並んだカメラや道具が、ときどき音を立てたり動き出したりします。「質量への憧憬」は、情報化で重さを失った世界で、ものの重さや手ざわりを求める感覚を表す、落合陽一氏が長く使ってきた言葉です。",
-  tip:"懐かしい道具を一つ見つけて、あとで教え合いましょう。1回では全部の仕掛けに気づけないそうです。",src:["nexus","happy","essay"]},
+  text:"「質量への憧憬」は、情報化で重さを失った世界で、ものの重さや手ざわりを求める感覚を表す、落合陽一氏が長く使ってきた言葉です。部屋の気持ちは「驚く」。何に驚くのかは、当日のお楽しみです。",
+  tip:"気になったものを一つ覚えておいて、あとで教え合いましょう。",src:["nexus","happy","essay"]},
  {id:"r4",cat:"room",no:4,name:"肆の間",en:"FOURTH ROOM",sub:"潜在空間の夢",feel:"トぶ",
-  text:"AIが世界をとらえる「潜在空間」の映像に包まれる、鏡とLEDのもう一つのシアター。来場者の動きに反応する仕掛けもあり、最後に送り出されるように体験が締めくくられます。",
-  tip:"強い光の明滅や大きな音があります。ホラーや驚かし演出はないそうです。",src:["nexus","happy"]},
+  text:"「潜在空間」は、AIが世界をとらえるときの見えない空間のこと。部屋の名前に「夢」が入った、二つ目の部屋です。部屋の気持ちは「トぶ」。どこへトぶのかは、入ってみてのお楽しみです。",
+  tip:"強い光の明滅や大きな音があると案内されています。ホラーや驚かし演出はないそうです。",src:["nexus","happy"]},
  {id:"r5",cat:"room",no:5,name:"橋",en:"BRIDGE",sub:"記号の彼岸",feel:"また来る",
-  text:"鏡越しに、通ってきた部屋が見える出口。写真を撮る場所でもあります。ここにも仕掛けがあり、万博の体験者には「そういうことだったのか」と気づける種明かしがあるそうです。",
+  text:"名前や意味といった記号を手放した、その向こう岸。六つの部屋の最後で、気持ちは「また来る」。順路のしめくくりに、何が見えてくるのかを楽しみにしておきましょう。",
   tip:"見終わったら、二人で「どこで何に気づいたか」を出し合いましょう。",src:["nexus","happy"]},
 
  {id:"null",cat:"idea",name:"ヌル（null）",
@@ -685,10 +706,10 @@ const N=[
   text:"コンピュータが空気や森のように身のまわりへ溶け込み、自然と人工の境目が消えていく状態。落合陽一氏が2015年から掲げている、作品の中心にある考え方です。",
   tip:"水田も、もとは人工の水利技術なのに今は「自然」に見える。技術も時間がたつと自然になっていく、という見方です。",src:["gloss","dnb"]},
  {id:"mirror",cat:"idea",name:"鏡の再発明",
-  text:"null²のテーマ。来場者の身体をデジタル化し、有機的に変形しながら自律して動く身体と対話させる。それを「有史以来、行われてこなかった鏡の再発明」と呼んでいます。",
+  text:"null²のテーマ。鏡はふつう、いまの自分をそのまま映すもの。その鏡を、デジタルの技術でもう一度発明し直す。落合陽一氏はそれを「有史以来、行われてこなかった鏡の再発明」と呼んでいます。",
   tip:"鏡に映るのは、いまの自分か、データになった自分か。",src:["null2","nexus"]},
  {id:"kigou",cat:"idea",name:"記号を手放す",
-  text:"名前、肩書き、意味。人がまとっている「記号」を少しずつ手放していくことが、部屋を巡る体験の流れになっています。万博のミラーシアターでも「記号を手放す儀式」が進みました。",
+  text:"名前、肩書き、意味。人がまとっている「記号」を少しずつ手放していくことが、部屋を巡る体験の流れになっています。",
   tip:"門で名前を置き、橋で「記号の彼岸」に着く。順路そのものが一つの物語です。",src:["nexus","ascii"]},
  {id:"butsuka",cat:"idea",name:"物化",
   text:"荘子に由来する言葉で、ものが別のものへ移り変わっていくこと。落合陽一氏は作品を、光や波が姿を変えていく過程として捉えています。",
@@ -698,9 +719,9 @@ const N=[
   tip:"弐の間「無眼界の夢」、肆の間「潜在空間の夢」。二つの部屋の名前に「夢」が入っています。",src:["gloss"]},
  {id:"latent",cat:"idea",name:"潜在空間",
   text:"AIが学んだことを、たくさんの数の組み合わせとして整理している見えない空間。絵を生み出すAIは、この空間の中を移動しながら画像を作ります。",
-  tip:"肆の間は、AIの頭の中に入っていくような体験です。",src:["nexus","happy"]},
+  tip:"肆の間「潜在空間の夢」の名前は、この言葉から来ています。",src:["nexus","happy"]},
  {id:"alife",cat:"idea",name:"人工生命",
-  text:"コンピュータの中で、生き物のように生まれたり動いたりするプログラム。万博のnull²にも、人工生命が自律的に生まれ続けるモードがありました。",
+  text:"コンピュータの中で、生き物のように生まれたり動いたりするプログラム。null²の作品世界にも、この人工生命の考え方が流れています。",
   tip:"null⁴の鏡面体も「光や風や人の動きに応じて振る舞いを変える人工生命体」と説明されています。",src:["ascii","null4"]},
  {id:"death",cat:"idea",name:"死の終焉",
   text:"デジタルの分身が話し続けるなら、まわりの人にとっての「死」（三人称の死）はどう変わるのか。『マタギドライヴ』の序章の題にも出てくる、null²の根っこにある問いです。",
@@ -719,39 +740,39 @@ const N=[
   tip:"「テトラ」は4。null⁴（テトラヌル）の名前とも響き合います。",src:["null4","tetra"]},
 
  {id:"mb",cat:"body",name:"Mirrored Body",sub:"ミラードボディ",
-  text:"公式アプリ。自分の「知識」「声」「容姿」を登録すると、AIで話したり動いたりする分身ができます。null²は、このデジタルの身体による「合わせ鏡」として来場者を映します。",
-  tip:"アプリは任意。入れておくと優先予約や特別演出などの利点があるそうです。登録するなら当日までに。",src:["nexus","tab"]},
+  text:"公式アプリ。自分の「知識」「声」「容姿」を登録すると、AIで話したり動いたりする分身ができます。デジタルの身体を持つ、もう一人の自分です。",
+  tip:"アプリは任意。入れておくと優先予約などの利点があるそうです。登録するなら当日までに。",src:["nexus","tab"]},
  {id:"dh",cat:"body",name:"デジタルヒューマン",
   text:"物理的な身体とデジタルの身体の両方を持ち、それが互いに影響し合う。『マタギドライヴ』の用語解説にも載っている考え方です。",
-  tip:"会場で自分の分身に会ったら「似てる？似てない？」を話してみてください。",src:["gloss"]},
+  tip:"アプリで分身ができたら「似てる？似てない？」を話してみてください。",src:["gloss"]},
  {id:"awase",cat:"body",name:"合わせ鏡",
-  text:"鏡を向かい合わせると、像が奥へ果てしなく続く。null²は、デジタルの身体による合わせ鏡として、風景を変換しながら来場者を映します。",
-  tip:"手鏡と洗面所の鏡で試すと、壱の間のちょっとした予習になります。",src:["nexus"]},
+  text:"鏡を向かい合わせると、像が奥へ果てしなく続く。null²の「鏡の再発明」を考える入口になる、いちばん身近な仕掛けです。",
+  tip:"手鏡と洗面所の鏡で試してみてください。像はどこまで続いて見えますか。",src:["nexus"]},
  {id:"membrane",cat:"body",name:"ミラーメンブレン",sub:"鏡の膜",
   text:"null²の外装に使われた、伸び縮みする鏡の膜。万博では建物そのものがうねるように動きました。null⁴の鏡面体にも、反射率98%の膜が使われます。",
   tip:"とても傷つきやすいので、館内の鏡には触れない・もたれないこと。",src:["nexus","null4"]},
  {id:"led",cat:"body",name:"LEDシアター",
-  text:"null²ⁿには大型のLEDシアターが二つあります。万博では1部屋だったものが2部屋になり、落合陽一氏は「万博をリバイバルしたというより、4倍以上でやってみた」と話しています。",
-  tip:"壱の間と肆の間、二つの鏡の部屋の違いを比べてみてください。",src:["nexus","happy"]},
+  text:"万博のnull²の中心にあった、鏡とLEDの空間。落合陽一氏はnull²ⁿについて「万博をリバイバルしたというより、4倍以上でやってみた」と話しています。",
+  tip:"何が「4倍以上」になったのか。見終わったら二人で答え合わせをしましょう。",src:["nexus","happy"]},
  {id:"scan",cat:"body",name:"3Dスキャン",
   text:"スマホのアプリで自分の姿を3Dスキャンし、それをMirrored Bodyに取り込んで、自分そっくりのデジタルヒューマンを作ります。",
   tip:"風でひらひらする服は、スキャンに向かないそうです。",src:["ascii"]},
  {id:"ai",cat:"body",name:"生成AI",
-  text:"分身が話す言葉や、潜在空間の映像を生み出す技術。null²ⁿは約50台のコンピュータを並列で動かしていて、いちばん苦労したのは電気の容量だったそうです。",
+  text:"分身が話す言葉や、AIが見る世界の映像を生み出す技術。null²ⁿは約50台のコンピュータを並列で動かしていて、いちばん苦労したのは電気の容量だったそうです。",
   tip:"万博のnull²は、ワークステーション5台と小さなマシン十数台で動いていました。",src:["phile"]},
  {id:"tool",cat:"body",name:"道具",
   text:"人類はおよそ300万年、道具を作って使ってきました。落合陽一氏は、AIの登場で人間が「道具を自分の手で作る」段階を卒業しつつあると話しています。",
-  tip:"参の間に並ぶ道具は、その長い歴史の標本のようなものです。",src:["phile"]},
+  tip:"参の間「質量への憧憬」と重ねて読むと、道具の見え方が少し変わるかもしれません。",src:["phile"]},
 
  {id:"null2",cat:"line",name:"null²",sub:"2025｜大阪・関西万博",
   text:"大阪・関西万博のシグネチャーパビリオン。テーマは「いのちを磨く」。鏡の外装がうねる建物に会期中約55万人が訪れましたが、予約が取れずに入れなかった人も大勢いました。",
-  tip:"鏡のシアターの中で分身と対話する「ダイアログモード」を体験できたのは、10万人強と推定されています。",src:["null2","phile","happy"]},
+  tip:"建物の中まで体験できたのは、10万人強と推定されています。",src:["null2","phile","happy"]},
  {id:"move",cat:"line",name:"ぬるぬるのお引越",
   text:"万博閉幕後の移設を支えたクラウドファンディング。開始23時間で1億円を突破し、15,821人が支援しました。",
   tip:"null²ⁿは、たくさんの「もう一度会いたい」という声で生まれた施設です。",src:["dime","tetra"]},
  {id:"film",cat:"line",name:"さようなら、ホモサピエンス",sub:"null²の公式記録映画",
   text:"万博のnull²を記録した公式映画。閉幕後に上映されてきました。",
-  tip:"上映や配信の情報が見つかったら、事前に観ておくと壱の間に入りやすくなります。",src:["dime"]},
+  tip:"万博のnull²の記録です。当日の驚きを大切にしたいなら、観るのは見終わったあとでもいいかもしれません。",src:["dime"]},
  {id:"null4",cat:"line",name:"null⁴",sub:"2027｜GREEN×EXPO 2027",
   text:"横浜の花博に現れる新作「テトラヌル」。四つの鏡面体が巨大なマニ車のように回り、花や空や人影を映して風景を変える「計算する庭」です。null²が「空の建築」なら、null⁴は「空の生命」。会期は2027年3月19日〜9月26日。",
   tip:"null²の移設ではなく、鏡と回転と空の発想を受け継いだ新しい作品です。次はここへ。",src:["tetra","null4"]},
@@ -781,22 +802,22 @@ const N=[
   tip:"null²のテーマは「いのちを磨く」。拡げるのか、磨くのか。名前の違いに、二人の態度の違いが出ています。",src:["djInochi","djSig"]},
  {id:"z1",cat:"inochi",name:"いのちの歩み",sub:"ゾーン1｜過去",
   text:"大阪・関西万博のパビリオン「いのちの未来」の最初のゾーン。土偶や埴輪、仏像、能面、文楽人形など、日本人がモノに「いのち」を宿してきた歴史をたどり、アンドロイドをその延長線上に位置づけていました。",
-  tip:"参の間に並ぶ道具や機材と比べると、人がモノに何を託してきたのかが見えてきます。",src:["ipa","twInochi"]},
+  tip:"参の間「質量への憧憬」と重ねると、人がモノに何を託してきたのかが見えてきます。",src:["ipa","twInochi"]},
  {id:"z2",cat:"inochi",name:"50年後の未来",sub:"ゾーン2｜祖母と孫娘の物語",
   text:"大阪・関西万博のパビリオン「いのちの未来」の中心となったゾーン。人間とアンドロイドが共に暮らす50年後の社会を、祖母と孫娘の物語として体験しました。余命の近い祖母が、記憶をアンドロイドに移すか、自然な死を選ぶかに向き合う場面が描かれました。",
   tip:"壱の間「さよならホモ・サピエンス」や「死の終焉」と同じ問いを、家族の物語として描いています。",src:["ipa","dir","bt"]},
  {id:"z3",cat:"inochi",name:"まほろば",sub:"ゾーン3｜1000年後のいのち",
   text:"大阪・関西万博のパビリオン「いのちの未来」の最後のゾーン。音と光に包まれた空間でアンドロイドが舞い踊り、身体の制約から解き放たれて自由に身体を選ぶ、1000年後の人間の姿を表現していました。「まほろば」は、すばらしい場所を意味する古い言葉です。",
-  tip:"肆の間「潜在空間の夢」で、身体の輪郭がほどけていく感覚と比べてみてください。",src:["bt","djInochi"]},
+  tip:"肆の間「潜在空間の夢」と並べて、身体の先にある世界を想像してみてください。",src:["bt","djInochi"]},
  {id:"android",cat:"inochi",name:"アンドロイド",sub:"人間酷似型ロボット",
   text:"人間そっくりの外見と動きを持つロボット（人間酷似型ロボット）。大阪・関西万博のパビリオン「いのちの未来」には、夏目漱石をモデルにした漱石アンドロイドなど、多くのアンドロイドが登場しました。",
-  tip:"null²ⁿの分身は画面と鏡の中にいて、アンドロイドは重さのある身体を持つ。「質量への憧憬」の視点で見比べると面白いところです。",src:["twInochi"]},
+  tip:"Mirrored Bodyの分身はデータの身体、アンドロイドは重さのある身体。「質量への憧憬」の視点で見比べると面白いところです。",src:["twInochi"]},
  {id:"gem",cat:"inochi",name:"ジェミノイド",sub:"イシグロイド（ジェミノイドHI-6）",
   text:"特定の人物にそっくりに作られた、遠隔操作型のアンドロイド。石黒浩氏が開発し、本人をモデルにしたものは「イシグロイド」と呼ばれます。最新のジェミノイドHI-6は、本人の発言や著書を学習したAIと組み合わさり、本人の考え方に沿って対話できます。",
   tip:"知識と声と容姿を登録するMirrored Bodyと、ほぼ同じことを物質の身体でやっています。",src:["twPlus","jst"]},
  {id:"valley",cat:"inochi",name:"不気味の谷",
   text:"ロボットやCGの見た目が人間に近づくほど親しみは増すものの、ある段階で急に違和感や不気味さが強まる、という現象。1970年にロボット工学者の森政弘氏が提唱しました。人そっくりのアンドロイドを研究する石黒浩氏にとっても、重要なテーマの一つです。",
-  tip:"壱の間で自分の分身に会ったとき、親しみと違和感のどちらが勝つか、確かめてみてください。",src:["jst"]},
+  tip:"Mirrored Bodyで自分の分身をつくったら、親しみと違和感のどちらが勝つか、確かめてみてください。",src:["jst"]},
  {id:"avatar",cat:"inochi",name:"アバター共生社会",
   text:"アバターとは、人が離れた場所から操作したり、自分の代わりに活動させたりする分身（ロボットやCG）のこと。アバター共生社会は、アバターを通して場所や時間に縛られずに働いたり人と関わったりできる社会を指し、国のムーンショット型研究開発事業の目標1が2050年までの実現をめざしています。石黒浩氏は、その研究を率いる一人です。",
   tip:"Mirrored Bodyで自分の分身を持つことも、アバターと暮らす未来への小さな入口です。",src:["pwc"]},
@@ -821,10 +842,10 @@ const N=[
   tip:"SFが苦手なら、こちらから。",src:[]},
  {id:"video",cat:"prep",name:"万博null²の映像",
   text:"YouTubeで「null2 万博」と検索すると、鏡の外装がうねる様子が見られます。",
-  tip:"いちばん手軽な予習。「あの中に入るんだ」という実感がわきます。",src:[]},
+  tip:"いちばん手軽な予習。外観の映像だけにしておくと、中の体験は当日のお楽しみに残せます。",src:[]},
  {id:"ears",cat:"prep",name:"目を閉じて5分",
   text:"イヤホンをして、目を閉じたまま5分だけ音を聴く。立体音響（バイノーラル）の動画もおすすめです。",
-  tip:"真っ暗な弐の間の予行演習です。",src:[]},
+  tip:"耳をすます練習です。「無眼界の夢」という部屋の名前を思い浮かべながら。",src:[]},
 
  {id:"expo25",cat:"mine",name:"2025年夏の万博",
   text:"2025年の夏、大阪・関西万博へ行きました。null²には入れず、石黒浩氏の「いのちの未来」に入りました。外から眺めたあの銀色の建物の内側を、私はまだ知りません。",
@@ -834,7 +855,7 @@ const N=[
   tip:"データを、もう一度手ざわりのある「もの」に戻す。参の間の「質量への憧憬」と、私の中で重なる感覚です。",src:[]},
  {id:"dark",cat:"mine",name:"暗室とフィルム",
   text:"フィルムカメラで撮り、現像し、引き伸ばしてプリントする。私が写真の授業で教えてきた、光をものに定着させる技術です。",
-  tip:"参の間に並ぶカメラの中に、私の知っている機種があるか探してみたいと思っています。",src:[]},
+  tip:"参の間「質量への憧憬」で、光をものに定着させてきたこの技術のことを思い出してみたいと思っています。",src:[]},
  {id:"aqua",cat:"mine",name:"ネイチャーアクアリウム",sub:"作品「せめぎ合う生命」",
   text:"私がつくった水槽の作品です。水草と魚と微生物が、ガラスの中で一つの小さな自然になる。",
   tip:"人がつくった自然。計算機自然の考え方と、どこか似ていると感じています。",src:[]},
@@ -843,10 +864,10 @@ const N=[
   tip:"null²の記録映画『さようなら、ホモサピエンス』も、消えていく体験を映像に残す試みです。記録が、のちに記憶になる。そこが重なります。",src:[]},
  {id:"hero",cat:"mine",name:"一人ひとりを映す鏡",
   text:"受け持った生徒には、小中学校で不登校を経験した子が多くいました。思い出ビデオをつくった一番の理由は、「ちゃんと見ているよ、あなたが主人公だよ」と伝えたかったからです。",
-  tip:"null²ⁿでは、来場者一人ひとりの分身が演出に登場します。見られること、映されることが、その人がそこにいることを確かめてくれる。",src:[]},
+  tip:"null²ⁿのテーマは「鏡の再発明」。見られること、映されることが、その人がそこにいることを確かめてくれる。",src:[]},
  {id:"album",cat:"mine",name:"記録と記憶",sub:"映像に残すこと、思い出すこと",
   text:"写真や映像に残した記録は、時間がたつと、本人やまわりの人の記憶をよみがえらせるものになります。保護者会で生徒の姿を収めた映像を上映したとき、それまで写真がほとんど残っていなかった生徒の保護者が、自分の子が映像や写真に収まっていることに、とても感動していました。記録に残ることは、その人がそこにいたという証しになるのだと実感しました。",
-  tip:"null²ⁿは、来場者の身体をデジタルの記録として映し出します。記録された分身は、本人の記憶とどう違うのか。「死の終焉」の問いとも重なります。",src:[]},
+  tip:"Mirrored Bodyは、自分の身体をデジタルの記録として残します。記録された分身は、本人の記憶とどう違うのか。「死の終焉」の問いとも重なります。",src:[]},
  {id:"faces",cat:"mine",name:"撮ることは、覚えること",
   text:"映像づくりを通して、ひと学年およそ180人の顔と名前、その様子を知ることができました。担任団の中で、一番よく知っていたと自負しています。",
   tip:"Mirrored Bodyは、知識と声と容姿から一人の分身をつくります。私は撮ることを通して、一人ひとりを覚えていきました。",src:[]},
@@ -943,6 +964,9 @@ const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
   else html=`<span class="label">12.13 SUN</span><b>行ってきた</b>`;
   $("count").innerHTML=html;
 })();
+$("count").setAttribute("role","button");$("count").tabIndex=0;$("count").title="今日のノートをひらく";
+$("count").onclick=()=>{if(typeof showAbout==="function")showAbout()};
+$("count").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("count").click()}};
 
 /* ───────── 3Dシーン ───────── */
 const stage=$("stage");
@@ -1433,6 +1457,13 @@ if(uK>0.5){
 
 
 /* ───────── ことばの採集帳（ひらいたことばを集め、鏡のしるしを手に入れる） ───────── */
+// 日めくりの足あと（ノートをひらいた日付）。しるしの判定より前に読み込んでおく
+let daysSeen=new Set();try{daysSeen=new Set(JSON.parse(localStorage.getItem("null2n-days")||"[]").filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)))}catch(e){}
+const WALK_DAYS=48;
+const jstDate=(ms=Date.now())=>new Date(ms+9*3600e3).toISOString().slice(0,10);
+const dateOfD=d=>new Date(Date.UTC(2026,11,13-d)).toISOString().slice(0,10);
+const dayNum=k=>Date.parse(k+"T00:00:00Z")/864e5;
+const mdOf=d=>{const t=new Date(Date.UTC(2026,11,13-d));return `${t.getUTCMonth()+1}月${t.getUTCDate()}日`};
 let visited=new Set();try{visited=new Set(JSON.parse(localStorage.getItem("null2n-visited")||"[]").filter(id=>byId[id]))}catch(e){}
 let mirrorOpened=false;try{mirrorOpened=localStorage.getItem("null2n-mirror-opened")==="1"}catch(e){}
 const CAT_ORDER=Object.keys(CATS);
@@ -1452,24 +1483,38 @@ const BADGES=[
  {id:"c-inochi",kind:"cat",cat:"inochi",name:"いのちの観測者",glyph:"命",cond:"いのちの未来をすべて採集する"},
  {id:"c-prep",kind:"cat",cat:"prep",name:"森へ入る準備",glyph:"備",cond:"森へ入る前にをすべて採集する"},
  {id:"c-mine",kind:"cat",cat:"mine",name:"レンズをのぞいた",glyph:"鏡",cond:"朝比奈のレンズをすべて採集する"},
- {id:"s-mirror",kind:"secret",name:"三つの鏡",glyph:"三",cond:"三つの鏡の扉をくぐる",hint:"森の上に、扉が浮かんでいる",color:"#3fd0f0"}
+ {id:"s-mirror",kind:"secret",name:"三つの鏡",glyph:"三",cond:"三つの鏡の扉をくぐる",hint:"森の上に、扉が浮かんでいる",color:"#3fd0f0"},
+ // 日めくりの足あと：毎日のノートを続けてひらくと手に入る
+ {id:"w3",kind:"streak",n:3,name:"歩きだす",glyph:"歩",cond:"3日つづけて、毎日のノートをひらく",color:"#e9c98f"},
+ {id:"w7",kind:"streak",n:7,name:"道になる",glyph:"道",cond:"7日つづけて、毎日のノートをひらく",color:"#e9c98f"},
+ {id:"w14",kind:"streak",n:14,name:"森になじむ",glyph:"森",cond:"14日つづけて、毎日のノートをひらく",color:"#e9c98f"},
+ {id:"w30",kind:"streak",n:30,name:"ひと月を歩く",glyph:"月",cond:"30日つづけて、毎日のノートをひらく",color:"#e9c98f"},
+ {id:"wall",kind:"through",name:"歩き通す",glyph:"通",cond:"12月13日まで、一日も欠かさずノートをひらく",color:"#f2b36b"},
+ // 森が満ちる：すべてのことばを採集したときに現れる、最後のしるし
+ {id:"full",kind:"full",name:"森が満ちる",glyph:"満",cond:`${N.length}のことばで、森を満たす`,hint:"森がすべて光るとき",color:"#f6e7b8"}
 ];
 BADGES.forEach(b=>{if(b.kind==="cat")b.color=CATS[b.cat].color});
 function isEarned(b){
   if(b.kind==="count")return visited.size>=b.n;
   if(b.kind==="cat")return N.filter(x=>x.cat===b.cat).every(x=>visited.has(x.id));
+  if(b.kind==="streak")return walkStats().best>=b.n;
+  if(b.kind==="through")return walkedThrough();
+  if(b.kind==="full")return visited.size>=N.length;
   return mirrorOpened;
 }
 const earnedSet=new Set(BADGES.filter(isEarned).map(b=>b.id));
 function checkBadges(){
-  BADGES.forEach(b=>{if(!earnedSet.has(b.id)&&isEarned(b)){earnedSet.add(b.id);toast(`鏡のしるし「${b.name}」を手に入れました`)}});
+  BADGES.forEach(b=>{if(!earnedSet.has(b.id)&&isEarned(b)){earnedSet.add(b.id);if(b.kind!=="full")toast(`鏡のしるし「${b.name}」を手に入れました`)}});
   updateCollectChip();refreshPedestal();
   if(!$("collection").hidden)renderCollection();
 }
 function markVisited(id){
   if(!byId[id]||visited.has(id))return false;
+  const was=visited.size;
   visited.add(id);try{localStorage.setItem("null2n-visited",JSON.stringify([...visited]))}catch(e){}
-  checkBadges();pedestalPulse=performance.now();return true;
+  checkBadges();pedestalPulse=performance.now();
+  if(was<N.length&&visited.size===N.length)setTimeout(()=>forestFull(true),600);   // 最後の一語で、森が満ちる
+  return true;
 }
 function updateCollectChip(){
   const c=$("collectChip");if(!c)return;
@@ -1481,14 +1526,15 @@ function renderCollection(){
   const next=BADGES.find(b=>b.kind==="count"&&!earnedSet.has(b.id));
   let h=`<div class="coll-top"><div><span class="label">FIELD COLLECTION <span class="s">/</span> ことばの採集帳</span>
      <h1 id="collTitle">ことばの採集帳</h1>
-     <p class="lead">森でひらいたことばは、ここに標本として残ります。全部で${N.length}。集めるほど、六つの部屋の「気持ち」をたどる鏡のしるしが手に入ります。</p></div>
+     <p class="lead">森でひらいたことばは、ここに標本として残ります。全部で${N.length}。集めるほど、六つの部屋の「気持ち」をたどる鏡のしるしが手に入ります。毎日のノートをひらくと、足あとのしるしも増えていきます。</p></div>
      <button class="x" id="collClose" aria-label="森へ戻る">×</button></div>
    <div class="prog"><div class="prog-num"><b><em>${visited.size}</em> / ${N.length}</b><span class="label">採集したことば ・ 鏡のしるし ${got} / ${BADGES.length}</span></div>
      <div class="prog-ticks" aria-hidden="true">${ORDERED.map(n=>`<i class="${visited.has(n.id)?"on":""}" style="--tc:${CATS[n.cat].color}"></i>`).join("")}</div>
      ${next?`<p class="label">次のしるし「${esc(next.name)}」まで、あと <span class="s">${next.n-visited.size}</span> 語</p>`:`<p class="label">すべてのことばを採集しました</p>`}</div>
    <section><h2>鏡のしるし <span class="label">MIRROR SIGNS ${got} / ${BADGES.length}</span></h2>
-     <div class="badges">${BADGES.map(b=>{const on=earnedSet.has(b.id);const sec=b.kind==="secret"&&!on;
+     <div class="badges">${BADGES.map(b=>{const on=earnedSet.has(b.id);const sec=(b.kind==="secret"||b.kind==="full")&&!on;
        return `<div class="badge ${on?"got":""}" style="--gc:${b.color}"><div class="gem"><canvas data-badge="${b.id}" width="168" height="168"></canvas><span>${on||!sec?esc(b.glyph):"？"}</span></div><b>${sec?"？？？":esc(b.name)}</b><small>${sec?esc(b.hint):esc(b.cond)}</small></div>`}).join("")}</div></section>
+   ${walkHtml()}
    <section class="specimens"><h2>標本箱 <span class="label">SPECIMENS</span></h2>`;
   CAT_ORDER.forEach(k=>{
     const items=N.filter(n=>n.cat===k);const c=items.filter(n=>visited.has(n.id)).length;
@@ -1501,11 +1547,13 @@ function renderCollection(){
     });
     h+=`</div></div>`;
   });
-  h+=`</section><div class="coll-foot"><span>採集の記録は、この端末のブラウザにだけ残ります。</span><button class="linkbtn" id="collReset">採集の記録を消す</button></div>`;
+  h+=`</section><div class="coll-foot"><span>採集と足あとの記録は、この端末のブラウザにだけ残ります。</span>${visited.size>=N.length?`<button class="linkbtn" id="collFull">森をもう一度満たす</button>`:""}<button class="linkbtn" id="collReset">採集の記録を消す</button></div>`;
   $("collBody").innerHTML=h;
   badgeCanvases=[...$("collBody").querySelectorAll("canvas[data-badge]")].map(c=>({c,ctx:c.getContext("2d"),b:BADGES.find(x=>x.id===c.dataset.badge)}));
   drawBadges(clock.getElapsedTime());
   $("collClose").onclick=closeCollection;
+  if($("collFull"))$("collFull").onclick=()=>forestFull(false);
+  $("collBody").querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{const d=+b.dataset.day;if(d<daysLeft())return;closeCollection(false);showAbout(d)});
   $("collBody").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{closeCollection(false);select(b.dataset.go)});
   $("collBody").querySelectorAll("[data-near]").forEach(b=>b.onclick=()=>{closeCollection(false);select(b.dataset.near);toast(`「${byId[b.dataset.near].name}」のまわりに、まだ見ぬことばがあります`)});
   let armed=false;$("collReset").onclick=e=>{
@@ -1600,6 +1648,112 @@ function collectHit(ev){
   const v=pedestal.label.getWorldPosition(new THREE.Vector3()).project(camera);if(v.z>1)return false;
   const x=(v.x+1)/2*innerWidth,y=(1-v.y)/2*innerHeight;return Math.hypot(x-ev.clientX,y-ev.clientY)<(ev.pointerType==="mouse"?44:56);
 }
+/* ───────── 日めくりの足あと ─────────
+   毎日のノートをひらいた日を、日付（日本時間）で記録する。採集の記録とは別のキー（null2n-days）に保存する。
+   森の床には、10月26日（あと48日）から12月13日まで、49日分の足あとが外から内へ渦を描いて並ぶ。 */
+function stampToday(){
+  const k=jstDate();if(daysSeen.has(k))return false;
+  daysSeen.add(k);try{localStorage.setItem("null2n-days",JSON.stringify([...daysSeen].sort()))}catch(e){}
+  stepPop=performance.now();refreshSteps();checkBadges();return true;
+}
+function walkStats(){
+  const ds=[...daysSeen].sort().map(dayNum);let best=0,run=0,prev=null;
+  ds.forEach(x=>{run=(prev!==null&&x-prev===1)?run+1:1;best=Math.max(best,run);prev=x});
+  const today=dayNum(jstDate());const cur=(prev===today||prev===today-1)?run:0;
+  return{best,cur,count:ds.length};
+}
+function walkedThrough(){
+  const last="2026-12-13";if(!daysSeen.has(last))return false;
+  const ds=[...daysSeen].sort().filter(k=>k<=last);if(ds.length<7)return false;
+  for(let x=dayNum(ds[0]);x<=dayNum(last);x++)if(!daysSeen.has(new Date(x*864e5).toISOString().slice(0,10)))return false;
+  return true;
+}
+function walkHtml(){
+  const st=walkStats(),today=daysLeft();let cells=["月","火","水","木","金","土","日"].map(w=>`<span class="wd">${w}</span>`).join("");
+  for(let d=WALK_DAYS;d>=0;d--){const k=dateOfD(d),t=new Date(Date.UTC(2026,11,13-d)),day=t.getUTCDate(),m=t.getUTCMonth()+1;
+    const cls=[daysSeen.has(k)?"on":"",d===today?"today":"",d<today?"fut":"",d===0?"last":""].join(" ").trim();
+    const lab=d===0?"当日":(day===1||d===WALK_DAYS)?`${m}/${day}`:day;
+    cells+=`<button class="${cls}" data-day="${d}" title="${mdOf(d)}（${d===0?"当日":"あと"+d+"日"}）${daysSeen.has(k)?" ・ ひらいた":""}">${lab}${d===today?"<small>今日</small>":""}</button>`}
+  const walked=[...daysSeen].filter(k=>{const d=Math.round(dayNum("2026-12-13")-dayNum(k));return d>=0&&d<=WALK_DAYS}).length;
+  return `<section class="walk"><h2>日めくりの足あと <span class="label">DAILY STEPS ${walked} / ${WALK_DAYS+1}</span></h2>
+    <p class="walk-stat">ひらいた日<b>${walked}</b>日 ・ いまの連続<b>${st.cur}</b>日 ・ いちばん長い連続<b>${st.best}</b>日</p>
+    <div class="walk-cal">${cells}</div>
+    <p class="walk-note">毎日のノートをひらくと、その日の足あとが森の床に一つ残ります。過ぎた日のノートは、ここか森の足あとをタップすると読み返せます。</p></section>`;
+}
+// 森の床の足あと
+let steps=null,stepPop=0,stepsT0=0;
+function buildSteps(){
+  const c=document.createElement("canvas");c.width=64;c.height=128;const x=c.getContext("2d");
+  x.fillStyle="#fff";x.shadowColor="#fff";x.shadowBlur=6;
+  x.beginPath();x.ellipse(32,56,19,30,0,0,Math.PI*2);x.fill();             // 足の前半
+  x.beginPath();x.ellipse(31,104,13,17,0,0,Math.PI*2);x.fill();            // かかと
+  [[13,30,6],[22,18,6.5],[33,13,7],[44,17,6],[52,27,5]].forEach(([tx,ty,r])=>{x.beginPath();x.arc(tx,ty,r,0,Math.PI*2);x.fill()});
+  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+  const geo=new THREE.PlaneGeometry(8.5,17);geo.rotateX(-Math.PI/2);
+  const mk=(color,opacity)=>new THREE.MeshBasicMaterial({map:tex,color,transparent:true,opacity,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});
+  const M={on:mk(0xf0c890,.95),today:mk(0xe64a2e,.9),miss:mk(0x8a8a90,.28),fut:mk(0xecebe6,.12)};
+  const g=new THREE.Group();scene.add(g);g.visible=false;
+  const y=FLOOR+.8,R0=315,R1=138,TURN=1.1,AEND=Math.PI*.3;   // 外から内へ、渦を描いて門（採集帳の輪）へ近づく
+  const at=t=>{const r=R0+(R1-R0)*t,a=AEND+(1-t)*TURN*Math.PI*2;return new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r)};
+  const days=[];
+  for(let i=0;i<=WALK_DAYS;i++){const d=WALK_DAYS-i,t=i/WALK_DAYS,P=at(t),F=at(Math.min(1,t+.004)).sub(at(Math.max(0,t-.004))).normalize();
+    const side=new THREE.Vector3(-F.z,0,F.x),rot=Math.atan2(-F.x,-F.z),feet=[];
+    [[1,-4],[-1,4]].forEach(([sd,fw],j)=>{const m=new THREE.Mesh(geo,M.fut);m.position.copy(P).addScaledVector(side,sd*6).addScaledVector(F,fw);m.rotation.y=rot;if(j===0)m.scale.x=-1;g.add(m);feet.push(m)});
+    days.push({d,P,feet})}
+  steps={g,M,days};refreshSteps();
+}
+function refreshSteps(){
+  if(!steps)return;const today=daysLeft();
+  steps.days.forEach(o=>{const seen=daysSeen.has(dateOfD(o.d));const m=seen?steps.M.on:o.d===today?steps.M.today:o.d>today?steps.M.miss:steps.M.fut;o.feet.forEach(f=>f.material=m)});
+}
+function updateSteps(t,now){
+  if(!steps)return;
+  // 採集帳の輪が広がりきってから、10月26日の一歩目から順に浮かび上がる
+  if(!pedestal||pedestal.k<1){steps.g.visible=false;return}
+  if(!stepsT0)stepsT0=now;steps.g.visible=true;
+  const shown=reduceMotion?1e9:(now-stepsT0)/38;
+  const today=daysLeft();
+  steps.days.forEach((o,i)=>{const v=i<shown;o.feet.forEach(f=>f.visible=v);
+    if(o.d===today){const k=Math.max(0,1-(now-stepPop)/900),s=1+k*.8+(reduceMotion?0:Math.sin(t*3)*.06);o.feet.forEach(f=>f.scale.set(f.scale.x<0?-s:s,1,s))}});
+  steps.M.today.opacity=reduceMotion?.9:.65+Math.sin(t*3)*.25;
+}
+function stepsHit(ev){
+  if(!steps||!steps.g.visible)return null;
+  let best=null,bd=ev.pointerType==="mouse"?16:26;const v=new THREE.Vector3();
+  steps.days.forEach(o=>{if(!o.feet[0].visible)return;v.copy(o.P).project(camera);if(v.z>1)return;
+    const x=(v.x+1)/2*innerWidth,y=(1-v.y)/2*innerHeight,d=Math.hypot(x-ev.clientX,y-ev.clientY);if(d<bd){bd=d;best=o}});
+  return best;
+}
+function stepLabel(o){const today=daysLeft(),seen=daysSeen.has(dateOfD(o.d));
+  return `${mdOf(o.d)}（${o.d===0?"当日":"あと"+o.d+"日"}）・ ${seen?"ひらいた":o.d===today?"今日":o.d>today?"ひらかなかった":"まだ先の日"}`}
+function stepOpen(o){const today=daysLeft();if(o.d<today){toast(`${mdOf(o.d)}のノートは、その日に読めます`);return}showAbout(o.d)}
+
+/* ───────── 森が満ちる（66のことばをすべて採集したとき） ───────── */
+let fullT=0,fullRing=null;
+function forestFull(reveal){
+  closePanel();if(tourOn)stopTour();$("quiz").hidden=true;$("mirrors").hidden=true;$("collection").hidden=true;clearFocus();
+  flyTo(homePos(),new THREE.Vector3(0,0,0),1200);
+  if(!fullRing){fullRing=new THREE.Mesh(new THREE.RingGeometry(.94,1,160).rotateX(-Math.PI/2),
+    new THREE.MeshBasicMaterial({color:0xfff3d6,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));
+    fullRing.position.y=FLOOR+1.5;scene.add(fullRing)}
+  fullT=performance.now()+(reduceMotion?0:1000);
+  setTimeout(()=>{const f=$("fullFlash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go")},reduceMotion?0:1000);
+  setTimeout(()=>{
+    if(reveal)toast("森が満ちました。最後のしるし「森が満ちる」が現れます。");
+    openCollection();const c=$("collBody").querySelector('canvas[data-badge="full"]');
+    if(c){const b=c.closest(".badge");b.classList.add("fresh");b.scrollIntoView({block:"center",behavior:reduceMotion?"auto":"smooth"})}
+  },reduceMotion?400:4600);
+}
+function updateFull(now){
+  if(!fullRing)return;const el=(now-fullT)/1000;
+  if(el<0||el>3.6){fullRing.material.opacity=0;return}
+  fullRing.scale.setScalar(Math.max(.01,el*260));fullRing.material.opacity=.9*(1-el/3.6);
+}
+function fullBoost(n,now){
+  if(!fullT)return 1;const el=(now-fullT)/1000;if(el<0||el>3.6)return 1;
+  const w=el*260,d=Math.hypot(n.home.x,n.home.z);return 1+1.4*Math.exp(-(((d-w)/48)**2));
+}
+
 /* 毎日かわる「はじめに」のメッセージ（キーは12月13日までの残り日数） */
 const DAILY={
  48:{t:"48日前、森の入口で。",m:"万博で入れなかったnull²が、横浜で常設のシアターになりました。今日から毎日、このノートに一つずつことばを置いていきます。開くたびに、森を一歩ずつ歩いてみてください。",go:"n2n"},
@@ -1612,43 +1766,43 @@ const DAILY={
  41:{t:"鏡の再発明",m:"null²ⁿのテーマは「鏡の再発明」。鏡に映るのは、いまの自分か、データになった自分か。今日、鏡の前に立ったら少しだけ意識してみてください。",go:"mirror"},
  40:{t:"あのとき見た銀色",m:"大阪・関西万博のnull²には、会期中およそ55万人が訪れました。予約が取れず、外から眺めるしかなかったあの銀色の建物の内側へ、いよいよ入ります。",go:"null2"},
  39:{t:"もう一度会いたい",m:"万博閉幕後、null²の移設を支えるクラウドファンディングは、開始23時間で1億円を超えました。null²ⁿは、たくさんの「もう一度会いたい」から生まれた場所です。",go:"move"},
- 38:{t:"最初の部屋「門」",m:"鏡の門をくぐり、名前や肩書きを置いていく部屋。この部屋の気持ちは「震える」。このマップの最初の画面も、この部屋をなぞっています。",go:"gate"},
+ 38:{t:"最初の部屋「門」",m:"「皆空鏡門」は、名前や肩書きから少し離れるところから始まる、旅の入口の部屋。気持ちは「震える」。このマップの最初の画面も、この部屋の名前をなぞっています。",go:"gate"},
  37:{t:"部屋の名前の秘密",m:"「皆空鏡門」の皆空、「無眼界の夢」の無眼界。部屋の名前は般若心経から来ています。名前に注目すると、その部屋で何を手放すのかが見えてきます。",go:"hannya"},
- 36:{t:"壱の間、戸惑う部屋",m:"「さよならホモ・サピエンス」は、意味がつかめないまま何かを手放していく儀式のような部屋。戸惑っていい部屋だと知っておくだけで、当日がずっと楽しくなります。",go:"r1"},
+ 36:{t:"壱の間、戸惑う部屋",m:"「さよならホモ・サピエンス」。人間に別れを告げる、という大胆な名前の部屋です。戸惑っていい部屋だと知っておくだけで、当日がずっと楽しくなります。",go:"r1"},
  35:{t:"記号を手放す",m:"名前、肩書き、意味。門で名前を置き、最後の橋で「記号の彼岸」に着く。六つの部屋の順路そのものが、一つの物語になっています。",go:"kigou"},
- 34:{t:"弐の間、整う部屋",m:"「無眼界の夢」は、完全な暗闇で、座って音だけを受け取る部屋。映像がまったくない部屋があるのも、null²ⁿの面白さです。",go:"r2"},
- 33:{t:"目を閉じて5分",m:"今日の予習は、目を閉じて5分だけ音を聴くこと。イヤホンで立体音響の動画を聴くと、弐の間の予行演習になります。",go:"ears"},
- 32:{t:"参の間、驚く部屋",m:"「質量への憧憬」は、古今東西の発明品や機材が並ぶ部屋。ときどき道具が音を立てたり、動き出したりします。懐かしい道具を一つ探してみてください。",go:"r3"},
- 31:{t:"道具の300万年",m:"人類はおよそ300万年、道具を作って使ってきました。参の間に並ぶ道具は、その長い歴史の標本です。家にある一番古い道具は何ですか？",go:"tool"},
- 30:{t:"肆の間、トぶ部屋",m:"「潜在空間の夢」は、AIが世界をとらえる映像に包まれる部屋。身体の輪郭がほどけていくような体験が待っています。",go:"r4"},
- 29:{t:"潜在空間",m:"AIは、学んだことをたくさんの数の組み合わせとして整理しています。肆の間は、その見えない空間の中に入っていくような体験です。",go:"latent"},
- 28:{t:"橋、また来る",m:"最後の「記号の彼岸」は、鏡越しに通ってきた部屋が見える出口。ここにも仕掛けがあるそうです。見終わったら、どこで何に気づいたか教えてください。",go:"r5"},
+ 34:{t:"弐の間、整う部屋",m:"「無眼界の夢」。「無眼界」は、見るという働きもない、という般若心経の言葉です。どんな部屋なのか、名前から想像してみてください。",go:"r2"},
+ 33:{t:"目を閉じて5分",m:"今日の予習は、目を閉じて5分だけ音を聴くこと。イヤホンで立体音響の動画を聴くと、耳をすます良い練習になります。",go:"ears"},
+ 32:{t:"参の間、驚く部屋",m:"「質量への憧憬」は、ものの重さや手ざわりを求める気持ちを表す言葉。部屋の気持ちは「驚く」。何に驚くのかは、当日のお楽しみです。",go:"r3"},
+ 31:{t:"道具の300万年",m:"人類はおよそ300万年、道具を作って使ってきました。参の間「質量への憧憬」を考える手がかりになりそうです。家にある一番古い道具は何ですか？",go:"tool"},
+ 30:{t:"肆の間、トぶ部屋",m:"「潜在空間の夢」は、AIが世界をとらえる見えない空間を名前に持つ部屋。気持ちは「トぶ」。どこへトぶのか、想像しておきましょう。",go:"r4"},
+ 29:{t:"潜在空間",m:"AIは、学んだことをたくさんの数の組み合わせとして整理しています。肆の間「潜在空間の夢」の名前は、この見えない空間から来ています。",go:"latent"},
+ 28:{t:"橋、また来る",m:"最後の部屋「記号の彼岸」は、記号を手放した向こう岸。気持ちは「また来る」。見終わったら、どこで何に気づいたか教えてください。",go:"r5"},
  27:{t:"一度、通しで歩いてみる",m:"今日は「六つの部屋を巡る」を押して、門から橋までを一度通しで歩いてみてください。部屋ごとの気持ちが、大きく浮かび上がります。",act:"tour"},
  26:{t:"ヌル診断",m:"いちばん心を動かされそうな部屋はどこでしょう。3問だけの「ヌル診断」で、当日いちばん注目したい部屋を決めておきましょう。",act:"quiz"},
- 25:{t:"分身をつくる",m:"今日の予習は、Mirrored Bodyで自分の分身をつくること。知識・声・容姿を登録しておくと、会場で自分の分身が演出に登場することがあります。",go:"mb"},
+ 25:{t:"分身をつくる",m:"今日の予習は、Mirrored Bodyで自分の分身をつくること。知識・声・容姿を登録して、もう一人の自分をつくっておくと、当日の体験が少し自分ごとになるかもしれません。",go:"mb"},
  24:{t:"分身に話しかける",m:"物理的な身体とデジタルの身体を、両方持つ。分身ができたら、少し話しかけてみてください。似ていますか？似ていませんか？",go:"dh"},
  23:{t:"週末の一本",m:"1995年の『攻殻機動隊』は約80分。自分を自分たらしめるものは何か、という問いは、そのまま壱の間につながります。",go:"gits"},
  22:{t:"データの中のあの人",m:"SNSや声のデータから、亡くなった恋人そっくりのAIを作る『ブラック・ミラー』の一話。データから作った分身は本人なのか。Mirrored Bodyとほぼ同じ問いです。",go:"bm"},
  21:{t:"死の終焉",m:"デジタルの分身が話し続けるなら、まわりの人にとっての「死」はどう変わるのか。『マタギドライヴ』の序章にも出てくる、null²の根っこにある問いです。",go:"death"},
- 20:{t:"合わせ鏡",m:"今日の予習は、手鏡と洗面所の鏡で合わせ鏡をしてみること。像が奥へずっと続く景色は、壱の間の小さな予告編です。",go:"awase"},
+ 20:{t:"合わせ鏡",m:"今日の予習は、手鏡と洗面所の鏡で合わせ鏡をしてみること。像が奥へずっと続く景色を、じっくり眺めてみてください。",go:"awase"},
  19:{t:"鏡の膜",m:"null²の外装は、伸び縮みする鏡の膜でできています。とても傷つきやすいので、館内の鏡には触れない・もたれないのがルールです。",go:"membrane"},
  18:{t:"胡蝶の夢",m:"自分が蝶の夢を見たのか、蝶が自分の夢を見ているのか。弐の間と肆の間、二つの部屋の名前に「夢」が入っています。",go:"kocho"},
  17:{t:"物化",m:"ものが別のものへ移り変わっていくこと。胡蝶の夢の結びに出てくる荘子の言葉で、落合陽一氏の作品を読むときの鍵になります。",go:"butsuka"},
  16:{t:"もう一つの分身",m:"石黒浩氏の「いのちの未来」はアンドロイドの分身、null²ⁿはデジタルの分身。同じ「分身」を、正反対の素材で考えた二つのパビリオンです。",go:"inochi"},
  15:{t:"磨く、と、拡げる",m:"null²のテーマは「いのちを磨く」、いのちの未来は「いのちを拡げる」。同じ「いのち」でも、向き合い方がまったく違います。",go:"hirogeru"},
  14:{t:"あと2週間",m:"石黒浩氏そっくりのアンドロイド、ジェミノイドは、本人の発言や著書を学んで対話します。Mirrored Bodyと同じことを、重さのある身体でやっているとも言えます。",go:"gem"},
- 13:{t:"不気味の谷",m:"人に似るほど親しみが増すのに、ある所で急に違和感が強くなる。壱の間で自分の分身に会ったとき、親しみと違和感のどちらが勝つか、確かめてみてください。",go:"valley"},
+ 13:{t:"不気味の谷",m:"人に似るほど親しみが増すのに、ある所で急に違和感が強くなる。Mirrored Bodyで分身をつくったら、親しみと違和感のどちらが勝つか、確かめてみてください。",go:"valley"},
  12:{t:"朝比奈のレンズから",m:"私はデジタルネガからサイアノタイプを焼いてきました。データを、もう一度手ざわりのある「もの」に戻す。参の間の「質量への憧憬」と、私の中で重なる感覚です。",go:"cyano"},
- 11:{t:"二つのまなざし",m:"大人が撮る写真と、子ども同士で撮る写真では、表情がまったく違う。でも、どちらもその人です。null²ⁿの合わせ鏡にも、いくつもの自分が映るはずです。",go:"gaze"},
+ 11:{t:"二つのまなざし",m:"大人が撮る写真と、子ども同士で撮る写真では、表情がまったく違う。でも、どちらもその人です。鏡の再発明のその先で、私たちはどんな自分に出会うのでしょう。",go:"gaze"},
  10:{t:"あと10日",m:"私がつくった水槽は、水草と魚と微生物がガラスの中で一つの自然になる作品です。人がつくった自然と計算機自然は、どこか似ていると感じています。",go:"aqua"},
  9:{t:"その先のnull⁴",m:"2027年3月、横浜の花博に新作null⁴が現れます。四つの鏡面体がマニ車のように回る「計算する庭」。null²ⁿは、その前の章でもあります。",go:"null4"},
  8:{t:"ある、ない、そのあわい",m:"あるもの、ないもの、そのあわい、まだ名づけられていないもの。当日の体験も、きっとどれか一つの言葉では言い切れないはずです。",go:"tetra"},
  7:{t:"あと1週間",m:"いよいよ来週です。今日は「当日までに」をひらいて、まだのことにチェックを入れていきましょう。",act:"todo"},
  6:{t:"アプリを最新に",m:"Mirrored Bodyはアップデートで楽しめることが増えています。分身をつくったら、当日までにアプリを最新の状態にしておいてください。",go:"mb"},
- 5:{t:"あの銀色を、もう一度",m:"YouTubeで「null2 万博」と検索すると、鏡の外装がうねる映像が見られます。外から見たあの姿を、目に焼きつけておきましょう。",go:"video"},
- 4:{t:"足もとの準備",m:"館内には床が鏡のエリアがあり、ヒールやサンダルでは入れないと案内されています。入口では靴にシューズカバーを付けます。歩きやすい靴で。",go:"n2n"},
- 3:{t:"二つのLEDシアター",m:"壱の間と肆の間は、どちらも鏡とLEDに包まれた部屋。万博のときよりずっと大きな体験になっているそうです。二つの違いを比べてみましょう。",go:"led"},
- 2:{t:"あさってです",m:"真っ暗な弐の間では、スマホの画面の明かりも控えるよう案内されます。通知をオフにする方法を、今日のうちに確かめておきましょう。",go:"r2"},
+ 5:{t:"あの銀色を、もう一度",m:"YouTubeで「null2 万博」と検索すると、鏡の外装がうねる映像が見られます。外から見たあの姿だけを、目に焼きつけておきましょう。",go:"video"},
+ 4:{t:"足もとの準備",m:"館内には、ヒールやサンダルでは入れないエリアがあると案内されています。入口では靴にシューズカバーを付けます。歩きやすい靴で。",go:"n2n"},
+ 3:{t:"4倍以上の万博",m:"落合陽一氏は、null²ⁿを「万博をリバイバルしたというより、4倍以上でやってみた」と話しています。何が4倍になったのか、見終わったら答え合わせをしましょう。",go:"led"},
+ 2:{t:"あさってです",m:"館内では、スマホの画面の明かりを控えるよう案内される場面があります。通知をオフにする方法を、今日のうちに確かめておきましょう。",go:"r2"},
  1:{t:"明日、門をくぐる。",m:"明日、いよいよ横浜へ。荷物は少なめに、歩きやすい靴で。今夜はこの森を一周して、気になることばを一つだけ持っていってください。",go:"gate"},
  0:{t:"今日、ヌルの森へ。",m:"いよいよ今日です。名前と肩書きを門に置いて、六つの部屋を巡りましょう。見終わったら、どこで何に気づいたか、たくさん話しましょう。",go:"gate"}
 };
@@ -1656,13 +1810,14 @@ const DAILY_BEFORE={t:"12月13日、ヌルの森へ。",m:"万博で入れなか
 const DAILY_AFTER={t:"また来る。",m:"最後の部屋「橋」の気持ちは「また来る」。次は2027年、花博のnull⁴へ。この森は、そのときにまた歩けるように残しておきます。",go:"null4"};
 function daysLeft(){return Math.ceil((Date.UTC(2026,11,12,15,0,0)-Date.now())/864e5)}
 ACT.todo=()=>showTodo();
-function showAbout(){
-  const d=daysLeft();
+function showAbout(dSel){
+  const today=daysLeft(),d=(typeof dSel==="number")?dSel:today;
+  if(d===today)stampToday();   // 今日のノートをひらいた日は、足あとが残る
   const note=d<0?DAILY_AFTER:(DAILY[d]||DAILY_BEFORE);
-  const label=d>0?`FIELD NOTE <span class="s">/</span> あと ${d} 日`:d===0?`FIELD NOTE <span class="s">/</span> 当日`:`FIELD NOTE <span class="s">/</span> その後`;
+  const label=d!==today&&d>=0&&d<=WALK_DAYS?`FIELD NOTE <span class="s">/</span> ${mdOf(d)}のノート`:d>0?`FIELD NOTE <span class="s">/</span> あと ${d} 日`:d===0?`FIELD NOTE <span class="s">/</span> 当日`:`FIELD NOTE <span class="s">/</span> その後`;
   const ACTNAME={tour:"六つの部屋を巡る",quiz:"ヌル診断",todo:"当日までに"};
   let btn="";
-  if(note.go&&byId[note.go])btn+=`<button class="btn small primary" data-go="${note.go}">今日のことば：${esc(byId[note.go].name)}</button>`;
+  if(note.go&&byId[note.go])btn+=`<button class="btn small primary" data-go="${note.go}">${d===today?"今日":"この日"}のことば：${esc(byId[note.go].name)}</button>`;
   if(note.act)btn+=`<button class="btn small primary" data-act="${note.act}">${ACTNAME[note.act]}</button>`;
   if(note.act!=="tour")btn+=`<button class="btn small" data-act="tour">六つの部屋を巡る</button>`;
   openPanel(label,`
@@ -1686,10 +1841,10 @@ function showList(){
 const TODO=[
  ["mb","Mirrored Bodyで分身をつくる","知識・声・容姿を登録。アプリの更新も忘れずに"],
  ["film","映画を1本観る","攻殻機動隊（1995年・約80分）がおすすめ"],
- ["video","万博null²の映像を見る","5分でできる予習"],
- ["ears","目を閉じて5分、音だけを聴く","弐の間の予行演習"],
- ["shoes","ヒールとサンダルは避ける","床が鏡のエリアがあります。荷物は少なめに"],
- ["notif","当日はスマホの通知をオフに","真っ暗な部屋があります"]
+ ["video","万博null²の映像を見る","外観の映像だけにしておくのがおすすめ"],
+ ["ears","目を閉じて5分、音だけを聴く","耳をすます練習"],
+ ["shoes","ヒールとサンダルは避ける","入れないエリアがあります。荷物は少なめに"],
+ ["notif","当日はスマホの通知をオフに","画面の明かりを控える場面があります"]
 ];
 function showTodo(){
   let saved={};try{saved=JSON.parse(localStorage.getItem("null2n-todo2")||"{}")}catch(e){}
@@ -1785,12 +1940,14 @@ renderer.domElement.addEventListener("pointerup",e=>{
   if(!downAt)return;const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(moved>6)return;
   if(portalHit(e)){openMirrors(true);return}
   if(collectHit(e)){openCollection();return}
+  {const o=stepsHit(e);if(o){stepOpen(o);return}}
   const n=e.pointerType==="mouse"?pick(e):(pickNear(e)||pick(e));if(n){if(tourOn)stopTour();select(n.id)}
 });
 renderer.domElement.addEventListener("pointerleave",()=>{tip.hidden=true});
 renderer.domElement.addEventListener("pointermove",e=>{
   if(e.pointerType!=="mouse"||e.buttons){tip.hidden=true;return}
   if(collectHit(e)){tip.hidden=false;tip.textContent="ことばの採集帳";tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer";return}
+  {const o=stepsHit(e);if(o){tip.hidden=false;tip.textContent=stepLabel(o);tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer";return}}
   if(portalHit(e)){tip.hidden=false;tip.textContent="三つの鏡";tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer";return}
   const n=pick(e);
   if(n){tip.hidden=false;tip.textContent=n.name;tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";renderer.domElement.style.cursor="pointer"}
@@ -1837,7 +1994,7 @@ function loop(now){
     const e=ease(k);
     n.obj.position.copy(n.home).multiplyScalar(e);
     if(!reduceMotion&&n.cat!=="core")n.obj.position.y+=Math.sin(t*.7+n.phase)*1.6;
-    n.obj.scale.setScalar(Math.max(.001,e));
+    n.obj.scale.setScalar(Math.max(.001,e)*fullBoost(n,now));
   });
   if(started&&!route&&!blooming){buildRoute();applyFocus()}
   // ことばと線が出そろってから、最後に三つの鏡の扉が現れる
@@ -1852,7 +2009,7 @@ function loop(now){
     byId.n2n.mesh.rotation.y=t*.12;
     dustNear.rotation.y=t*.012;dustWhite.rotation.y=-t*.008;
   }
-  updatePortal(t);updatePedestal(t);
+  updatePortal(t);updatePedestal(t);updateSteps(t,now);updateFull(now);
   if(!$("collection").hidden&&!reduceMotion)drawBadges(t);
   if(route&&routeLight){const u=(t*.07)%1;routeLight.position.copy(route.getPointAt(u));routeLight.scale.setScalar(20+Math.sin(t*6)*4)}
   {const g=viewGoal();vo.x+=(g.x-vo.x)*.08;vo.y+=(g.y-vo.y)*.08;
@@ -1877,7 +2034,7 @@ requestAnimationFrame(loop);
 // 準備ができた合図。門を先にくぐっていたら、ここで森をひらく
 window.NX.ready=true;$("loading").hidden=true;
 buildPortal();
-buildPedestal();updateCollectChip();
+buildPedestal();buildSteps();updateCollectChip();
 if(location.hash==="#collection"){enterGate("");openCollection()}
 if(location.hash==="#mirrors"){enterGate("");openMirrors(false)}
 else if(window.NX.entered!==null)enterGate(window.NX.entered);
