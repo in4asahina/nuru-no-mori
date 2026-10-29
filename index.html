@@ -1265,8 +1265,8 @@ ACT.mirrors=()=>openMirrors(true);
    写しは、視線が鏡の高さの内側を通って届くところだけを描くので、
    どこから見ても本物の三面鏡と同じように、わたしが平面いっぱいに映り広がる。 */
 let mf=null;
-// 下の三枚のカード（見てきた鏡・これから入る鏡・物語の鏡）で、図の鏡を立てる。はじめは一枚もない
-const mfOn=[false,false,false];
+// 下の三枚のカード（見てきた鏡・これから入る鏡・物語の鏡）で、図の鏡を立てる。はじめは三枚とも立っている
+const mfOn=[true,true,true];
 function syncMirrorUI(){
   document.querySelectorAll(".m-tog").forEach(b=>b.setAttribute("aria-pressed",mfOn[+b.dataset.w]?"true":"false"));
   document.querySelectorAll(".mf-legend span").forEach((el,i)=>el.classList.toggle("off",!mfOn[i]));
