@@ -135,8 +135,8 @@ body.touring .dock,body.touring .legend{display:none}
 .gate h2{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,52px);line-height:1.35;margin:0;text-wrap:balance}
 .gate p{margin:0;color:var(--dim);font-size:14px}
 .gate .field{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
-.gate input{background:rgba(236,235,230,.05);border:1px solid var(--hair);border-radius:2px;color:var(--ink);font:inherit;padding:10px 12px;width:min(320px,100%)}
-.gate input::placeholder{color:#77756f}
+.gate input{background:rgba(236,235,230,.05);border:1px solid var(--hair);border-radius:2px;color:var(--ink);font:inherit;padding:10px 12px;width:min(320px,100%);text-align:center}
+.gate input::placeholder{color:#77756f;text-align:center}
 .skip{border:0;background:transparent;color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:13px;padding:4px}
 #dust{position:fixed;inset:0;z-index:21;pointer-events:none;width:100%;height:100%}
 
@@ -1104,6 +1104,17 @@ const linePos=new Float32Array(E.length*6),lineCol=new Float32Array(E.length*6);
 lineGeo.setAttribute("position",new THREE.BufferAttribute(linePos,3));lineGeo.setAttribute("color",new THREE.BufferAttribute(lineCol,3));
 const lines=new THREE.LineSegments(lineGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
 lines.frustumCulled=false;scene.add(lines);
+/* 鏡の床に映るもの：ひらいた（採集した）ことばと、その間の線だけ。
+   レイヤー0＝森と鏡の両方に映る ／ 1＝森にだけ見える ／ 2＝鏡の中にだけ映る */
+lines.layers.set(1);
+mirrorFloor.camera.layers.enable(2);
+const rLineCol=new Float32Array(E.length*6);
+const rLineGeo=new THREE.BufferGeometry();rLineGeo.setAttribute("position",lineGeo.attributes.position);rLineGeo.setAttribute("color",new THREE.BufferAttribute(rLineCol,3));
+const rLines=new THREE.LineSegments(rLineGeo,lines.material);rLines.frustumCulled=false;rLines.layers.set(2);scene.add(rLines);
+function syncReflect(){
+  N.forEach(n=>{const lay=visited.has(n.id)?0:1;
+    if(n._lay!==lay||!n.label.layers.isEnabled(lay)){n._lay=lay;n.obj.traverse(o=>o.layers.set(lay))}});
+}
 let focus=null;
 function edgeLevel(s,t){
   const a=byId[s],b=byId[t];if(!a.vis||!b.vis)return 0;
@@ -1113,8 +1124,10 @@ function edgeLevel(s,t){
 function updateLines(){
   E.forEach(([s,t],i)=>{const a=byId[s].obj.position,b=byId[t].obj.position;linePos.set([a.x,a.y,a.z,b.x,b.y,b.z],i*6);
     const lv=edgeLevel(s,t),ca=byId[s].col,cb=byId[t].col;
-    lineCol.set([ca.r*lv,ca.g*lv,ca.b*lv,cb.r*lv,cb.g*lv,cb.b*lv],i*6)});
-  lineGeo.attributes.position.needsUpdate=true;lineGeo.attributes.color.needsUpdate=true;
+    lineCol.set([ca.r*lv,ca.g*lv,ca.b*lv,cb.r*lv,cb.g*lv,cb.b*lv],i*6);
+    const rv=(visited.has(s)&&visited.has(t))?lv:0;rLineCol.set([ca.r*rv,ca.g*rv,ca.b*rv,cb.r*rv,cb.g*rv,cb.b*rv],i*6)});
+  lineGeo.attributes.position.needsUpdate=true;lineGeo.attributes.color.needsUpdate=true;rLineGeo.attributes.color.needsUpdate=true;
+  syncReflect();
 }
 
 // 順路（門→橋）を朱の光の線で
@@ -1123,8 +1136,8 @@ function buildRoute(){
   route=new THREE.CatmullRomCurve3(ROOMS.map(id=>byId[id].home.clone()),false,"catmullrom",.5);
   const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(route.getPoints(200)),
     new THREE.LineBasicMaterial({color:0xe64a2e,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
-  scene.add(l);route.line=l;
-  routeLight=glowSprite(0xff8a6a,24);routeLight.material.opacity=1;scene.add(routeLight);
+  scene.add(l);route.line=l;l.layers.set(1);
+  routeLight=glowSprite(0xff8a6a,24);routeLight.material.opacity=1;routeLight.layers.set(1);scene.add(routeLight);
 }
 
 /* ───────── 表示・選択 ───────── */
@@ -1828,7 +1841,8 @@ function showAbout(dSel){
    <div class="howto"><span class="label">歩き方</span>
      <span>ドラッグで森を回す　／　ピンチ・ホイールで近づく</span>
      <span>光る点をタップすると、そのことばのノートがひらきます</span>
-     <span>朱い線は、門から橋までの順路です</span></div>`);
+     <span>朱い線は、門から橋までの順路です</span>
+     <span>ひらいたことばだけが、足もとの鏡に映っていきます</span></div>`);
 }
 function showList(){
   let html=`<h2>ことばの一覧</h2><p class="sub">${N.length}のことば、${E.length}本のつながり</p>`;
@@ -1919,7 +1933,7 @@ ACT.quiz=openQuiz;
 $("quizBtn").onclick=openQuiz;$("quizClose").onclick=()=>{$("quiz").hidden=true};
 
 /* ───────── タップと吹き出し ───────── */
-const ray=new THREE.Raycaster();ray.camera=camera;const mouse=new THREE.Vector2();const tip=$("tooltip");
+const ray=new THREE.Raycaster();ray.camera=camera;ray.layers.enableAll();const mouse=new THREE.Vector2();const tip=$("tooltip");
 function pick(ev){
   const r=renderer.domElement.getBoundingClientRect();mouse.set((ev.clientX-r.left)/r.width*2-1,-(ev.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(mouse,camera);
