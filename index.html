@@ -1046,7 +1046,7 @@ function fitLabel(s){if(!s.userData.base)s.userData.base=s.scale.clone();s.scale
 function makeLabel(n){
   const isRoom=n.cat==="room",isCore=n.cat==="core";
   return fitLabel_(textSprite(n.name,{size:isCore?13:isRoom?9:5.6,font:(isRoom||isCore)?"Shippori Mincho B1":"Zen Kaku Gothic New",weight:(isRoom||isCore)?800:500,
-    sub:isRoom?`${n.en} · ${n.sub}`:isCore?"null²ⁿ nexus":null}));
+    sub:isRoom?`${n.en} · ${n.sub}`:isCore?"ヌルヌルネクサス":null}));
 }
 function fitLabel_(s){fitLabel(s);return s}
 
@@ -1866,7 +1866,6 @@ function showAbout(dSel){
   openPanel(label,`
    <h2>${esc(note.t)}</h2>
    <p>${esc(note.m)}</p>
-   <p class="sig">朝比奈</p>
    <div class="row">${btn}</div>
    <div class="howto"><span class="label">歩き方</span>
      <span>ドラッグで森を回す　／　ピンチ・ホイールで近づく</span>
